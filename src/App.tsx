@@ -412,6 +412,8 @@ export default function App() {
             commitMessage: `Deploy ${sanitizedName} from CloudDeploy`,
             cfAccountId: cfAccountId || undefined,
             cfApiToken: cfToken || undefined,
+            buildCommand: buildOnServer ? customBuildCommand : undefined,
+            outputDir: buildOnServer ? customOutputDir : undefined,
           })
         });
 
@@ -865,6 +867,8 @@ export default function App() {
     const steps = isGithub ? githubGuideSteps : cloudflareGuideSteps;
     const totalSteps = steps.length;
     const step = steps[guideStep];
+    const accentColor = isGithub ? '#3b82f6' : '#f97316';
+    const accentBg = isGithub ? 'rgba(59,130,246,0.2)' : 'rgba(249,115,22,0.2)';
     return (
       <AnimatePresence>
         {showGuide && (
@@ -881,45 +885,53 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="w-full max-w-md bg-zinc-950 rounded-t-[32px] border-t border-x border-white/10 overflow-hidden"
+              className="w-full max-w-md bg-zinc-950 rounded-t-[32px] border-t border-x border-white/10 flex flex-col"
+              style={{ maxHeight: '92vh' }}
               onClick={e => e.stopPropagation()}
             >
               {/* Handle */}
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
+
               {/* Header */}
-              <div className="px-6 pt-2 pb-3 flex items-center justify-between">
-                <button onClick={() => { setShowGuide(null); setGuideStep(0); }} className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400">
+              <div className="px-6 pt-2 pb-3 flex items-center justify-between flex-shrink-0">
+                <button
+                  onClick={() => { setShowGuide(null); setGuideStep(0); }}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400"
+                >
                   <X size={18} />
                 </button>
                 <div className="text-center">
-                  <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: isGithub ? '#58a6ff' : '#fb923c' }}>
+                  <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: accentColor }}>
                     {isGithub ? 'GitHub' : 'Cloudflare'} — הדרכת חיבור
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">שלב {guideStep + 1} מתוך {totalSteps}</p>
                 </div>
                 <div className="w-10" />
               </div>
-              {/* Progress */}
-              <div className="px-6 mb-3">
+
+              {/* Progress bar + step dots */}
+              <div className="px-6 mb-4 flex-shrink-0">
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: isGithub ? '#3b82f6' : '#f97316' }}
+                    style={{ background: accentColor }}
                     animate={{ width: `${((guideStep + 1) / totalSteps) * 100}%` }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
-                <div className="flex justify-between mt-1">
+                {/* dir="ltr" prevents RTL from reversing the step numbers */}
+                <div className="flex gap-1.5 mt-2 justify-center" dir="ltr">
                   {steps.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setGuideStep(i)}
-                      className="w-5 h-5 rounded-full text-[9px] font-bold transition-all flex items-center justify-center"
+                      className="w-6 h-6 rounded-full text-[9px] font-bold transition-all flex items-center justify-center flex-shrink-0"
                       style={{
-                        background: i <= guideStep ? (isGithub ? '#3b82f6' : '#f97316') : 'rgba(255,255,255,0.08)',
-                        color: i <= guideStep ? 'white' : '#666',
+                        background: i <= guideStep ? accentColor : 'rgba(255,255,255,0.08)',
+                        color: i <= guideStep ? 'white' : '#555',
+                        transform: i === guideStep ? 'scale(1.2)' : 'scale(1)',
                       }}
                     >
                       {i + 1}
@@ -927,33 +939,50 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              {/* Content */}
-              <div className="px-6 pb-4" style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-6 pb-4 min-h-0">
+                {/* Image fades independently — no layout shift */}
+                <div className="w-full mb-4">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`img-${guideStep}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {step.img}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Text fades independently — no x-slide = no layout jump */}
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={guideStep}
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -30 }}
-                    transition={{ duration: 0.18 }}
-                    className="space-y-4"
+                    key={`text-${guideStep}`}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-start gap-3"
                   >
-                    {step.img}
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: isGithub ? 'rgba(59,130,246,0.2)' : 'rgba(249,115,22,0.2)', color: isGithub ? '#60a5fa' : '#fb923c' }}>
-                        {guideStep + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
-                        <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{step.desc}</p>
-                      </div>
+                    <div
+                      className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ background: accentBg, color: accentColor }}
+                    >
+                      {guideStep + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
+                      <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{step.desc}</p>
                     </div>
                   </motion.div>
                 </AnimatePresence>
               </div>
-              {/* Navigation */}
-              <div className="px-6 pb-8 flex gap-3">
+
+              {/* Navigation — always pinned to bottom */}
+              <div className="px-6 pt-3 pb-8 flex gap-3 flex-shrink-0 border-t border-white/5">
                 <button
                   onClick={() => setGuideStep(s => Math.max(0, s - 1))}
                   disabled={guideStep === 0}
@@ -964,16 +993,16 @@ export default function App() {
                 {guideStep < totalSteps - 1 ? (
                   <button
                     onClick={() => setGuideStep(s => s + 1)}
-                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all"
-                    style={{ background: isGithub ? '#2563eb' : '#ea580c' }}
+                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                    style={{ background: accentColor }}
                   >
                     הבא <ChevronLeft size={15} />
                   </button>
                 ) : (
                   <button
                     onClick={() => { setShowGuide(null); setGuideStep(0); }}
-                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all"
-                    style={{ background: isGithub ? '#2563eb' : '#ea580c' }}
+                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                    style={{ background: accentColor }}
                   >
                     <CheckCircle2 size={15} /> סיום
                   </button>
@@ -994,7 +1023,7 @@ export default function App() {
           <div className="w-10 h-10 accent-bg rounded-xl flex items-center justify-center accent-shadow">
             <CloudUpload className="text-white" size={24} />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">CloudDeploy <span className="text-xs font-normal text-zinc-500">v12</span></h1>
+          <h1 className="text-xl font-bold tracking-tight">CloudDeploy <span className="text-xs font-normal text-zinc-500">v15</span></h1>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -2028,7 +2057,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-8 text-center text-zinc-600 text-xs">
-        <p>© 2026 CloudDeploy Mobile v12 • Built with AI</p>
+        <p>© 2026 CloudDeploy Mobile v15 • Built with AI</p>
       </footer>
     </div>
   );
