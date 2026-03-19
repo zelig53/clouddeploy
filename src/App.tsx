@@ -429,33 +429,34 @@ export default function App() {
           }).catch(err => console.error('Auto-merge error:', err));
         }
 
-        // 4. Deploy directly to Cloudflare (direct upload — no GitHub<->CF OAuth needed)
+        // 4. Deploy to Cloudflare via server-side Worker (handles CORS + correct 3-step upload API)
         if (autoDeployCloudflare && cfToken && cfAccountId) {
           setStep('waiting-cf');
           setCfStatus('מעלה קבצים ל-Cloudflare...');
 
-          const cfRes = await fetch('/api/deploy-to-cloudflare', {
+          const cfDeployRes = await fetch('/api/cf-deploy', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              cfToken,
+              cfAccountId,
               projectName: sanitizedName,
-              accountId: cfAccountId,
-              apiToken: cfToken,
               zipFile: base64Zip,
-              buildOnServer,
-              buildCommand: customBuildCommand,
-              outputDir: customOutputDir
-            })
+              branch: isUpdate ? `deploy-${Date.now()}` : 'main',
+            }),
           });
 
-          const cfData = await cfRes.json();
-          if (!cfRes.ok) throw new Error(cfData.error || 'פריסה ל-Cloudflare נכשלה');
+          const cfDeployData = await cfDeployRes.json() as any;
+          if (!cfDeployRes.ok) {
+            throw new Error(cfDeployData.error || 'פריסה ל-Cloudflare נכשלה');
+          }
 
-          setDeployUrl(cfData.url);
-          setPreviewUrl(cfData.previewUrl);
+          setDeployUrl(cfDeployData.deploymentUrl || `https://${sanitizedName}.pages.dev`);
+          setPreviewUrl(cfDeployData.deploymentUrl);
           setStep('success');
         } else {
-          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          // CF not configured — GitHub only
+          setDeployUrl(null);
           setStep('success');
         }
       } else {
@@ -917,16 +918,18 @@ export default function App() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                        <a 
-                          href={deployUrl || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
-                        >
-                          <ExternalLink size={18} />
-                          פתח אתר
-                        </a>
+                      <div className={`grid gap-4 pt-4 ${deployUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {deployUrl && (
+                          <a 
+                            href={deployUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
+                          >
+                            <ExternalLink size={18} />
+                            פתח אתר
+                          </a>
+                        )}
                         <button 
                           onClick={() => {
                             setView('dashboard');
