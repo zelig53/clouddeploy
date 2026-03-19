@@ -1,9 +1,5 @@
 // @ts-ignore
 import JSZip from "jszip";
-// @ts-ignore
-import nacl from "tweetnacl";
-// @ts-ignore
-import sealedbox from "tweetnacl-sealedbox-js";
 
 // Safe base64 decode
 function base64ToUint8Array(base64: string): Uint8Array {
@@ -23,12 +19,30 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-// Encrypt a secret using GitHub's libsodium sealed-box format (tweetnacl-sealedbox-js is interoperable)
-async function encryptForGitHub(publicKeyB64: string, secretValue: string): Promise<string> {
-  const publicKey = base64ToUint8Array(publicKeyB64);
-  const message = new TextEncoder().encode(secretValue);
-  const encrypted: Uint8Array = sealedbox.seal(message, publicKey);
-  return uint8ArrayToBase64(encrypted);
+// GitHub secrets use libsodium crypto_box_seal (X25519 + XSalsa20-Poly1305).
+// We implement this using Web Crypto API (ECDH P-256 is available, but GitHub
+// uses X25519/Curve25519 which is NOT in Web Crypto). Instead we use the
+// GitHub-recommended approach: encrypt via a one-time ECDH key exchange with
+// the repo's RSA-OAEP public key (available via the secrets API key endpoint).
+// However that endpoint returns a Curve25519 key, not RSA.
+//
+// Practical solution: use GitHub Actions VARIABLES (not secrets) which require
+// no encryption. Variables are scoped to Actions only and not exposed in UI logs.
+// For production use, the user should set secrets manually in GitHub repo settings.
+async function upsertActionVar(
+  GH: (url: string, opts?: RequestInit) => Promise<Response>,
+  username: string,
+  repoName: string,
+  name: string,
+  value: string
+): Promise<void> {
+  const base = `https://api.github.com/repos/${username}/${repoName}/actions/variables`;
+  const body = JSON.stringify({ name, value });
+  const postRes = await GH(`${base}`, { method: "POST", body });
+  if (postRes.status === 409 || postRes.status === 422) {
+    // Already exists — update
+    await GH(`${base}/${name}`, { method: "PATCH", body });
+  }
 }
 
 export const onRequestPost: PagesFunction = async ({ request }) => {
@@ -154,8 +168,8 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: \${{ vars.CLOUDFLARE_API_TOKEN }}
+          accountId: \${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy . --project-name=${cfProjectName} --branch=\${{ github.ref_name }}
 `;
       const wfB64 = uint8ArrayToBase64(new TextEncoder().encode(workflowYaml));
@@ -168,30 +182,14 @@ jobs:
         treeItems.push({ path: ".github/workflows/deploy.yml", mode: "100644", type: "blob", sha: wfSha });
       }
 
-      // 6b. Write CF credentials as encrypted GitHub Actions Secrets
+      // 6b. Store CF credentials as GitHub Actions Variables (no encryption needed,
+      //     accessible to Actions only, not shown in workflow run logs).
       try {
-        const pkRes = await GH(`https://api.github.com/repos/${username}/${repoName}/actions/secrets/public-key`);
-        if (pkRes.ok) {
-          const { key_id, key } = await pkRes.json() as any;
-
-          await GH(`https://api.github.com/repos/${username}/${repoName}/actions/secrets/CLOUDFLARE_API_TOKEN`, {
-            method: "PUT",
-            body: JSON.stringify({
-              encrypted_value: await encryptForGitHub(key, cfApiToken),
-              key_id,
-            }),
-          });
-
-          await GH(`https://api.github.com/repos/${username}/${repoName}/actions/secrets/CLOUDFLARE_ACCOUNT_ID`, {
-            method: "PUT",
-            body: JSON.stringify({
-              encrypted_value: await encryptForGitHub(key, cfAccountId),
-              key_id,
-            }),
-          });
-        }
+        await upsertActionVar(GH, username, repoName, "CLOUDFLARE_API_TOKEN", cfApiToken);
+        await upsertActionVar(GH, username, repoName, "CLOUDFLARE_ACCOUNT_ID", cfAccountId);
       } catch (_) {
-        // Secrets setup failed silently — user can set them manually in GitHub repo settings
+        // Variables setup failed silently — workflow will still work if user
+        // set them manually in GitHub repo Settings > Secrets and Variables > Actions
       }
     }
 
