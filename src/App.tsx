@@ -455,7 +455,8 @@ export default function App() {
           setPreviewUrl(cfData.previewUrl);
           setStep('success');
         } else {
-          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          // CF not configured — show GitHub link only, no fake CF URL
+          setDeployUrl(null);
           setStep('success');
         }
       } else {
@@ -917,16 +918,18 @@ export default function App() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                        <a 
-                          href={deployUrl || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
-                        >
-                          <ExternalLink size={18} />
-                          פתח אתר
-                        </a>
+                      <div className={`grid gap-4 pt-4 ${deployUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {deployUrl && (
+                          <a 
+                            href={deployUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
+                          >
+                            <ExternalLink size={18} />
+                            פתח אתר
+                          </a>
+                        )}
                         <button 
                           onClick={() => {
                             setView('dashboard');
