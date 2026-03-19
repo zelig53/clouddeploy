@@ -429,33 +429,115 @@ export default function App() {
           }).catch(err => console.error('Auto-merge error:', err));
         }
 
-        // 4. Deploy directly to Cloudflare (direct upload — no GitHub<->CF OAuth needed)
+        // 4. Deploy directly to Cloudflare from the browser (no server needed)
         if (autoDeployCloudflare && cfToken && cfAccountId) {
           setStep('waiting-cf');
+          setCfStatus('מחלץ קבצים...');
+
+          // Extract ZIP in browser using JSZip (avoids Cloudflare Workers runtime issues)
+          const zipBuffer = Uint8Array.from(atob(base64Zip), c => c.charCodeAt(0));
+          const JSZipLib = (await import('jszip')).default;
+          const zip = new JSZipLib();
+          const zipContent = await zip.loadAsync(zipBuffer);
+
+          const fileNames = Object.keys(zipContent.files).filter(
+            n => !zipContent.files[n].dir && !n.includes('__MACOSX') && !n.includes('.DS_Store')
+          );
+
+          // Detect common root
+          let commonRoot = '';
+          if (fileNames.length > 0) {
+            const allParts = fileNames.map(n => n.split('/'));
+            const minLen = Math.min(...allParts.map(p => p.length));
+            const common: string[] = [];
+            for (let i = 0; i < minLen - 1; i++) {
+              const part = allParts[0][i];
+              if (allParts.every(p => p[i] === part)) common.push(part); else break;
+            }
+            if (common.length > 0) commonRoot = common.join('/') + '/';
+          }
+          const hasIndexAtRoot = fileNames.find(n => n.substring(commonRoot.length) === 'index.html');
+          if (!hasIndexAtRoot) {
+            const indexPath = fileNames.find(n => n.endsWith('/index.html'));
+            if (indexPath) { const p = indexPath.split('/'); p.pop(); commonRoot = p.join('/') + '/'; }
+          }
+
+          // Build file buffers
+          const fileBuffers: Record<string, Uint8Array> = {};
+          for (const filename of fileNames) {
+            const buf = await zipContent.files[filename].async('uint8array');
+            let cleanPath = filename.startsWith(commonRoot) ? filename.substring(commonRoot.length) : filename;
+            cleanPath = cleanPath.replace(/^\/+/, '');
+            if (cleanPath) fileBuffers[cleanPath] = buf;
+          }
+
+          if (!fileBuffers['index.html']) {
+            throw new Error(`index.html לא נמצא בקבצים: ${Object.keys(fileBuffers).slice(0, 5).join(', ')}`);
+          }
+
+          setCfStatus('יוצר פרויקט ב-Cloudflare...');
+
+          // Ensure project exists
+          const projCheck = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/pages/projects/${sanitizedName}`,
+            { headers: { Authorization: `Bearer ${cfToken}` } }
+          );
+          if (projCheck.status === 404) {
+            const cr = await fetch(
+              `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/pages/projects`,
+              {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: sanitizedName, production_branch: 'main' })
+              }
+            );
+            if (!cr.ok) {
+              const e = await cr.json() as any;
+              throw new Error(`יצירת פרויקט נכשלה: ${e.errors?.[0]?.message}`);
+            }
+          }
+
+          setCfStatus('מחשב checksums...');
+
+          // Build SHA256 manifest in browser
+          const manifest: Record<string, string> = {};
+          for (const [filePath, buf] of Object.entries(fileBuffers)) {
+            const hash = await crypto.subtle.digest('SHA-256', buf.buffer as ArrayBuffer);
+            manifest['/' + filePath] = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+          }
+
           setCfStatus('מעלה קבצים ל-Cloudflare...');
 
-          const cfRes = await fetch('/api/deploy-to-cloudflare', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectName: sanitizedName,
-              accountId: cfAccountId,
-              apiToken: cfToken,
-              zipFile: base64Zip,
-              buildOnServer,
-              buildCommand: customBuildCommand,
-              outputDir: customOutputDir
-            })
-          });
+          // Upload directly to Cloudflare Pages from browser
+          const guessMime = (name: string) => {
+            const ext = name.split('.').pop()?.toLowerCase() || '';
+            const m: Record<string,string> = { html:'text/html', css:'text/css', js:'application/javascript', mjs:'application/javascript', json:'application/json', png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', svg:'image/svg+xml', ico:'image/x-icon', woff:'font/woff', woff2:'font/woff2', ttf:'font/ttf', webp:'image/webp', txt:'text/plain', webmanifest:'application/manifest+json', map:'application/json' };
+            return m[ext] || 'application/octet-stream';
+          };
 
-          const cfData = await cfRes.json();
-          if (!cfRes.ok) throw new Error(cfData.error || 'פריסה ל-Cloudflare נכשלה');
+          const formData = new FormData();
+          formData.append('manifest', JSON.stringify(manifest));
+          formData.append('metadata', JSON.stringify({ branch: 'main' }));
+          for (const [filePath, buf] of Object.entries(fileBuffers)) {
+            formData.append(filePath, new Blob([buf], { type: guessMime(filePath) }), filePath);
+          }
 
-          setDeployUrl(cfData.url);
-          setPreviewUrl(cfData.previewUrl);
+          const deployRes = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/pages/projects/${sanitizedName}/deployments`,
+            { method: 'POST', headers: { Authorization: `Bearer ${cfToken}` }, body: formData }
+          );
+
+          const deployData = await deployRes.json() as any;
+          if (!deployRes.ok) {
+            throw new Error(`שגיאת Cloudflare: ${deployData.errors?.[0]?.message || JSON.stringify(deployData)}`);
+          }
+
+          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          setPreviewUrl(deployData.result?.url);
           setStep('success');
         } else {
-          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          // CF not configured — GitHub only
+          setDeployUrl(null);
           setStep('success');
         }
       } else {
@@ -917,16 +999,18 @@ export default function App() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                        <a 
-                          href={deployUrl || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
-                        >
-                          <ExternalLink size={18} />
-                          פתח אתר
-                        </a>
+                      <div className={`grid gap-4 pt-4 ${deployUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {deployUrl && (
+                          <a 
+                            href={deployUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
+                          >
+                            <ExternalLink size={18} />
+                            פתח אתר
+                          </a>
+                        )}
                         <button 
                           onClick={() => {
                             setView('dashboard');
