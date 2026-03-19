@@ -148,3 +148,50 @@ input[type="file"]::file-selector-button {
 ::-webkit-scrollbar-thumb {
   @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }
+
+/* ── Light mode: toggle rows ── */
+.light-mode .bg-blue-500\/10 { background-color: rgba(37,99,235,0.08) !important; }
+.light-mode .bg-orange-500\/10 { background-color: rgba(249,115,22,0.08) !important; }
+.light-mode .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.08) !important; }
+.light-mode .bg-violet-500\/10 { background-color: rgba(139,92,246,0.08) !important; }
+.light-mode .border-blue-500\/30 { border-color: rgba(37,99,235,0.25) !important; }
+.light-mode .border-orange-500\/25, .light-mode .border-orange-500\/30 { border-color: rgba(249,115,22,0.25) !important; }
+.light-mode .border-emerald-500\/25, .light-mode .border-emerald-500\/30 { border-color: rgba(16,185,129,0.25) !important; }
+.light-mode .border-violet-500\/30 { border-color: rgba(139,92,246,0.25) !important; }
+
+/* ── Light mode: toggle pill bg ── */
+.light-mode .bg-white\/10 { background-color: rgba(0,0,0,0.1) !important; }
+
+/* ── Light mode: section label text ── */
+.light-mode .text-zinc-500 { color: #64748b !important; }
+.light-mode .text-zinc-600 { color: #475569 !important; }
+
+/* ── Light mode: settings modal bg ── */
+.light-mode .fixed .glass {
+  background-color: rgba(255,255,255,0.92) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* ── Light mode: token badge text ── */
+.light-mode .text-emerald-300 { color: #059669 !important; }
+.light-mode .text-orange-300 { color: #c2410c !important; }
+.light-mode .text-blue-400 { color: #1d4ed8 !important; }
+.light-mode .text-orange-400 { color: #ea580c !important; }
+.light-mode .text-emerald-400 { color: #059669 !important; }
+.light-mode .text-violet-300 { color: #7c3aed !important; }
+
+/* ── Light mode: framework preset buttons ── */
+.light-mode .bg-white\/5 button, .light-mode button.bg-white\/5 {
+  background-color: rgba(0,0,0,0.04) !important;
+  color: #334155 !important;
+}
+
+/* ── Light mode: handle bar ── */
+.light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.12) !important; }
+
+/* ── Light mode: detection badge ── */
+.light-mode .bg-violet-500\/10 { background-color: rgba(139,92,246,0.08) !important; }
+.light-mode .text-violet-300 { color: #6d28d9 !important; }
+.light-mode .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.08) !important; }
+.light-mode .text-emerald-300 { color: #047857 !important; }
+

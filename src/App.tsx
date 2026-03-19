@@ -161,6 +161,7 @@ export default function App() {
   const [cfAccountId, setCfAccountId] = useState(() => localStorage.getItem('cf_account_id') || '');
   const [githubToken, setGithubToken] = useState(() => localStorage.getItem('github_token') || '');
   const [githubRepo, setGithubRepo] = useState(() => localStorage.getItem('github_repo') || '');
+  const [githubConnectedUser, setGithubConnectedUser] = useState(() => localStorage.getItem('github_connected_user') || '');
   const [useGithub, setUseGithub] = useState(() => localStorage.getItem('use_github') === 'true');
   const [showGithub, setShowGithub] = useState(false);
 
@@ -185,6 +186,7 @@ export default function App() {
     localStorage.setItem('github_token', githubToken);
     localStorage.setItem('github_repo', githubRepo);
     localStorage.setItem('use_github', useGithub.toString());
+    if (githubConnectedUser) localStorage.setItem('github_connected_user', githubConnectedUser);
   }, [githubToken, githubRepo, useGithub]);
 
   const fetchProjects = async () => {
@@ -537,10 +539,14 @@ export default function App() {
         body: JSON.stringify({ githubToken })
       });
 
-      const data = await response.json();
+      let data: any = {};
+      const text = await response.text();
+      try { data = JSON.parse(text); } catch {
+        throw new Error(`תגובה לא תקינה מהשרת (${response.status})`);
+      }
       if (!response.ok) throw new Error(data.error || 'החיבור נכשל');
 
-      alert(`החיבור הצליח! מחובר כ: ${data.username}`);
+      setGithubConnectedUser(data.username);
     } catch (err: any) {
       alert(`שגיאה בחיבור: ${err.message}`);
     } finally {
@@ -1285,16 +1291,47 @@ export default function App() {
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">פרטי GitHub</p>
                     <div className="space-y-3">
-                      <div className="relative">
-                        <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">Personal Access Token</label>
-                        <input
-                          type="password"
-                          value={githubToken}
-                          onChange={(e) => setGithubToken(e.target.value)}
-                          placeholder="ghp_..."
-                          className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm pr-4"
-                        />
-                      </div>
+
+                      {/* Token — show badge when connected, input when not */}
+                      {githubConnectedUser ? (
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                              <Github size={16} className="text-emerald-400" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-emerald-300">מחובר כ-{githubConnectedUser}</p>
+                              <p className="text-[10px] text-zinc-500 mt-0.5">הטוקן שמור ומוגן</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => { setGithubConnectedUser(''); setGithubToken(''); localStorage.removeItem('github_connected_user'); }}
+                            className="text-[10px] text-zinc-500 hover:text-rose-400 transition-colors font-medium px-2 py-1 rounded-lg hover:bg-rose-500/10"
+                          >
+                            החלף
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">Personal Access Token</label>
+                          <input
+                            type="password"
+                            value={githubToken}
+                            onChange={(e) => setGithubToken(e.target.value)}
+                            placeholder="ghp_..."
+                            className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
+                          />
+                          <button
+                            onClick={handleTestGithubConnection}
+                            disabled={isTestingGithub || !githubToken}
+                            className="w-full py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-2 border border-white/5"
+                          >
+                            {isTestingGithub ? <Loader2 size={14} className="animate-spin" /> : <Github size={14} className="text-zinc-400" />}
+                            {isTestingGithub ? 'בודק חיבור...' : 'חבר ל-GitHub'}
+                          </button>
+                        </div>
+                      )}
+
                       <div className="relative">
                         <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">שם המאגר <span className="text-zinc-600">(ריק = שם הפרויקט)</span></label>
                         <input
@@ -1305,14 +1342,6 @@ export default function App() {
                           className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
                         />
                       </div>
-                      <button
-                        onClick={handleTestGithubConnection}
-                        disabled={isTestingGithub || !githubToken}
-                        className="w-full py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-2 border border-white/5"
-                      >
-                        {isTestingGithub ? <Loader2 size={14} className="animate-spin" /> : <Github size={14} className="text-zinc-400" />}
-                        {isTestingGithub ? 'בודק חיבור...' : 'בדוק חיבור ל-GitHub'}
-                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -1321,27 +1350,66 @@ export default function App() {
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">פרטי Cloudflare</p>
                   <div className="space-y-3">
-                    <div>
-                      <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">Account ID</label>
-                      <input
-                        type="password"
-                        value={cfAccountId}
-                        onChange={(e) => setCfAccountId(e.target.value)}
-                        placeholder="abc123..."
-                        className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">API Token</label>
-                      <input
-                        type="password"
-                        value={cfToken}
-                        onChange={(e) => setCfToken(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
-                      />
-                    </div>
-                    <p className="text-[10px] text-zinc-600 px-1">הפרטים נשמרים בדפדפן שלך בלבד ולא נשלחים לשום שרת חיצוני</p>
+
+                    {/* Account ID */}
+                    {cfAccountId ? (
+                      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/25">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                            <Globe size={15} className="text-orange-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-orange-300">Account ID מוגדר</p>
+                            <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{'•'.repeat(8)}{cfAccountId.slice(-4)}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setCfAccountId('')} className="text-[10px] text-zinc-500 hover:text-rose-400 transition-colors font-medium px-2 py-1 rounded-lg hover:bg-rose-500/10">
+                          החלף
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">Account ID</label>
+                        <input
+                          type="password"
+                          value={cfAccountId}
+                          onChange={(e) => setCfAccountId(e.target.value)}
+                          placeholder="abc123..."
+                          className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {/* API Token */}
+                    {cfToken ? (
+                      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/25">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                            <CheckCircle2 size={15} className="text-orange-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-orange-300">API Token מוגדר</p>
+                            <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{'•'.repeat(12)}{cfToken.slice(-4)}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setCfToken('')} className="text-[10px] text-zinc-500 hover:text-rose-400 transition-colors font-medium px-2 py-1 rounded-lg hover:bg-rose-500/10">
+                          החלף
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-[10px] text-zinc-500 mb-1.5 block font-medium">API Token</label>
+                        <input
+                          type="password"
+                          value={cfToken}
+                          onChange={(e) => setCfToken(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full glass rounded-2xl px-4 py-3.5 focus:outline-none accent-ring text-sm"
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-zinc-600 px-1">הפרטים נשמרים בדפדפן שלך בלבד</p>
                   </div>
                 </div>
 
