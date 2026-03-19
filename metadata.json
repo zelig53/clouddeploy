@@ -1,0 +1,5 @@
+{
+  "name": "Remix: CloudDeploy Mobile",
+  "description": "Deploy websites to Cloudflare Pages directly from your mobile by uploading a ZIP file.",
+  "requestFramePermissions": []
+}
