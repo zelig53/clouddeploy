@@ -1,7 +1,6 @@
 // @ts-ignore
 import JSZip from "jszip";
 
-// Safe base64 decode
 function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -9,7 +8,6 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
-// Safe base64 encode — chunked to avoid stack overflow on large files
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = "";
   const chunkSize = 8192;
@@ -17,32 +15,6 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
   }
   return btoa(binary);
-}
-
-// GitHub secrets use libsodium crypto_box_seal (X25519 + XSalsa20-Poly1305).
-// We implement this using Web Crypto API (ECDH P-256 is available, but GitHub
-// uses X25519/Curve25519 which is NOT in Web Crypto). Instead we use the
-// GitHub-recommended approach: encrypt via a one-time ECDH key exchange with
-// the repo's RSA-OAEP public key (available via the secrets API key endpoint).
-// However that endpoint returns a Curve25519 key, not RSA.
-//
-// Practical solution: use GitHub Actions VARIABLES (not secrets) which require
-// no encryption. Variables are scoped to Actions only and not exposed in UI logs.
-// For production use, the user should set secrets manually in GitHub repo settings.
-async function upsertActionVar(
-  GH: (url: string, opts?: RequestInit) => Promise<Response>,
-  username: string,
-  repoName: string,
-  name: string,
-  value: string
-): Promise<void> {
-  const base = `https://api.github.com/repos/${username}/${repoName}/actions/variables`;
-  const body = JSON.stringify({ name, value });
-  const postRes = await GH(`${base}`, { method: "POST", body });
-  if (postRes.status === 409 || postRes.status === 422) {
-    // Already exists — update
-    await GH(`${base}/${name}`, { method: "PATCH", body });
-  }
 }
 
 export const onRequestPost: PagesFunction = async ({ request }) => {
@@ -56,11 +28,15 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
       branch = "main",
       cfAccountId,
       cfApiToken,
+      buildCommand,   // e.g. "npm run build" — if present, source code mode
+      outputDir,      // e.g. "dist" — where built files land
     } = await request.json() as any;
 
     if (!githubToken || !repoName || !zipFile) {
       return Response.json({ error: "Missing GitHub credentials or file" }, { status: 400 });
     }
+
+    const isSourceCode = !!buildCommand; // if buildCommand provided → source code that needs building
 
     const GH = (url: string, opts: RequestInit = {}) =>
       fetch(url, {
@@ -103,6 +79,7 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
       n => !content.files[n].dir && !n.includes("__MACOSX") && !n.includes(".DS_Store")
     );
 
+    // Detect and strip common root folder (e.g. "myapp-v1/src/..." → "src/...")
     let commonRoot = "";
     if (fileNames.length > 0) {
       const allParts = fileNames.map(n => n.split("/"));
@@ -114,21 +91,53 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
       }
       if (common.length > 0) commonRoot = common.join("/") + "/";
     }
-    const hasIndexAtRoot = fileNames.find(n => n.substring(commonRoot.length) === "index.html");
-    if (!hasIndexAtRoot) {
-      const indexPath = fileNames.find(n => n.endsWith("/index.html"));
-      if (indexPath) {
-        const p = indexPath.split("/"); p.pop();
-        commonRoot = p.join("/") + "/";
+
+    // For static sites: also try to find index.html to refine root
+    if (!isSourceCode) {
+      const hasIndexAtRoot = fileNames.find(n => n.substring(commonRoot.length) === "index.html");
+      if (!hasIndexAtRoot) {
+        const indexPath = fileNames.find(n => n.endsWith("/index.html"));
+        if (indexPath) {
+          const p = indexPath.split("/"); p.pop();
+          commonRoot = p.join("/") + "/";
+        }
       }
     }
 
-    // ── 4. Get base commit SHA ──────────────────────────────────────────────
-    const mainRes = await GH(`https://api.github.com/repos/${username}/${repoName}/branches/main`);
-    const mainData = await mainRes.json() as any;
-    let targetSha: string | undefined = mainData.commit?.sha;
+    // ── 4. Get base commit SHA (try main, fallback to master, fallback to any branch) ──
+    let targetSha: string | undefined;
+    let defaultBranch = "main";
 
-    // ── 5. Create feature branch if this is an update ──────────────────────
+    // Try main first
+    const mainRes = await GH(`https://api.github.com/repos/${username}/${repoName}/branches/main`);
+    if (mainRes.ok) {
+      const mainData = await mainRes.json() as any;
+      targetSha = mainData.commit?.sha;
+    } else {
+      // Fallback: get repo default branch (GitHub sometimes creates 'master')
+      const repoInfoRes = await GH(`https://api.github.com/repos/${username}/${repoName}`);
+      if (repoInfoRes.ok) {
+        const repoInfo = await repoInfoRes.json() as any;
+        defaultBranch = repoInfo.default_branch || "main";
+        if (defaultBranch !== "main") {
+          const defRes = await GH(`https://api.github.com/repos/${username}/${repoName}/branches/${defaultBranch}`);
+          if (defRes.ok) {
+            const defData = await defRes.json() as any;
+            targetSha = defData.commit?.sha;
+            // Rename default branch to main
+            if (targetSha) {
+              await GH(`https://api.github.com/repos/${username}/${repoName}/branches/${defaultBranch}/rename`, {
+                method: "POST",
+                body: JSON.stringify({ new_name: "main" }),
+              });
+              await new Promise(r => setTimeout(r, 1000));
+            }
+          }
+        }
+      }
+    }
+
+    // ── 5. Create feature branch if update ─────────────────────────────────
     if (branch !== "main" && targetSha) {
       const branchCheck = await GH(`https://api.github.com/repos/${username}/${repoName}/branches/${branch}`);
       if (branchCheck.status === 404) {
@@ -145,33 +154,52 @@ export const onRequestPost: PagesFunction = async ({ request }) => {
     // ── 6. Build git tree ───────────────────────────────────────────────────
     const treeItems: any[] = [];
 
-    // 6a. Inject GitHub Actions workflow — wrangler pages deploy on every push.
-    //     This is the only stable official way to deploy to CF Pages via API.
+    // 6a. Inject GitHub Actions workflow
     if (cfAccountId && cfApiToken) {
       const cfProjectName = projectName || repoName;
-      const workflowYaml = `name: Deploy to Cloudflare Pages
-on:
-  push:
-    branches:
-      - main
-      - 'deploy-*'
-  workflow_dispatch:
+      const deployDir = isSourceCode ? (outputDir || "dist") : ".";
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: \${{ vars.CLOUDFLARE_API_TOKEN }}
-          accountId: \${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=${cfProjectName} --branch=\${{ github.ref_name }}
-`;
+      // Build the workflow lines — two modes:
+      // • Source code: npm install + npm run build → deploy outputDir
+      // • Static files: deploy . directly (already built)
+      const buildSteps = isSourceCode ? [
+        "      - name: Install dependencies",
+        "        run: npm clean-install --progress=false",
+        `      - name: Build`,
+        `        run: ${buildCommand || "npm run build"}`,
+      ] : [];
+
+      const workflowLines = [
+        "name: Deploy to Cloudflare Pages",
+        "on:",
+        "  push:",
+        "    branches:",
+        "      - main",
+        "      - 'deploy-*'",
+        "  workflow_dispatch:",
+        "",
+        "env:",
+        `  CLOUDFLARE_API_TOKEN: "${cfApiToken}"`,
+        `  CLOUDFLARE_ACCOUNT_ID: "${cfAccountId}"`,
+        "",
+        "jobs:",
+        "  deploy:",
+        "    runs-on: ubuntu-latest",
+        "    permissions:",
+        "      contents: read",
+        "      deployments: write",
+        "    steps:",
+        "      - uses: actions/checkout@v4",
+        ...buildSteps,
+        "      - name: Deploy to Cloudflare Pages",
+        "        uses: cloudflare/wrangler-action@v3",
+        "        with:",
+        "          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}",
+        "          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}",
+        `          command: pages deploy ${deployDir} --project-name=${cfProjectName} --branch=\${{ github.ref_name }}`,
+      ];
+
+      const workflowYaml = workflowLines.join("\n") + "\n";
       const wfB64 = uint8ArrayToBase64(new TextEncoder().encode(workflowYaml));
       const wfBlobRes = await GH(`https://api.github.com/repos/${username}/${repoName}/git/blobs`, {
         method: "POST",
@@ -181,19 +209,9 @@ jobs:
         const { sha: wfSha } = await wfBlobRes.json() as any;
         treeItems.push({ path: ".github/workflows/deploy.yml", mode: "100644", type: "blob", sha: wfSha });
       }
-
-      // 6b. Store CF credentials as GitHub Actions Variables (no encryption needed,
-      //     accessible to Actions only, not shown in workflow run logs).
-      try {
-        await upsertActionVar(GH, username, repoName, "CLOUDFLARE_API_TOKEN", cfApiToken);
-        await upsertActionVar(GH, username, repoName, "CLOUDFLARE_ACCOUNT_ID", cfAccountId);
-      } catch (_) {
-        // Variables setup failed silently — workflow will still work if user
-        // set them manually in GitHub repo Settings > Secrets and Variables > Actions
-      }
     }
 
-    // 6c. Add all user app files as blobs
+    // 6b. Add all user files as blobs (stripping common root)
     for (const filename of fileNames) {
       const buffer = await content.files[filename].async("uint8array");
       const b64 = uint8ArrayToBase64(buffer);
@@ -211,10 +229,10 @@ jobs:
       const cleanPath = filename.startsWith(commonRoot)
         ? filename.substring(commonRoot.length)
         : filename;
-      treeItems.push({ path: cleanPath, mode: "100644", type: "blob", sha });
+      if (cleanPath) treeItems.push({ path: cleanPath, mode: "100644", type: "blob", sha });
     }
 
-    // ── 7. Create tree, commit, update ref ─────────────────────────────────
+    // ── 7. Create tree → commit → update ref ──────────────────────────────
     const treeRes = await GH(`https://api.github.com/repos/${username}/${repoName}/git/trees`, {
       method: "POST",
       body: JSON.stringify({ base_tree: targetSha, tree: treeItems }),

@@ -412,6 +412,8 @@ export default function App() {
             commitMessage: `Deploy ${sanitizedName} from CloudDeploy`,
             cfAccountId: cfAccountId || undefined,
             cfApiToken: cfToken || undefined,
+            buildCommand: buildOnServer ? customBuildCommand : undefined,
+            outputDir: buildOnServer ? customOutputDir : undefined,
           })
         });
 
@@ -563,301 +565,326 @@ export default function App() {
   };
 
   // ── GitHub Guide Steps ────────────────────────────────────────────────────
+  // ── Guide Steps: GitHub ──────────────────────────────────────────────────
   const githubGuideSteps = [
     {
       title: 'כנס ל-GitHub ולחץ על תמונת הפרופיל',
       desc: 'באתר github.com, לחץ על תמונת הפרופיל שלך בפינה הימנית העליונה של המסך.',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <rect x="0" y="0" width="300" height="38" fill="#161b22"/>
-          <rect x="10" y="13" width="55" height="12" rx="3" fill="#f0f6fc" opacity="0.9"/>
-          <rect x="90" y="13" width="35" height="12" rx="3" fill="#30363d" opacity="0.5"/>
-          <rect x="135" y="13" width="35" height="12" rx="3" fill="#30363d" opacity="0.5"/>
-          <circle cx="276" cy="19" r="12" fill="#30363d"/>
-          <circle cx="276" cy="16" r="5" fill="#8b949e"/>
-          <ellipse cx="276" cy="26" rx="8" ry="4" fill="#8b949e"/>
-          <rect x="220" y="6" width="44" height="14" rx="4" fill="#f78166" opacity="0.2" stroke="#f78166" strokeWidth="1"/>
-          <text x="224" y="16" fill="#f78166" fontSize="7" fontFamily="sans-serif">לחץ כאן</text>
-          <path d="M218 12 L222 12" stroke="#f78166" strokeWidth="1.5" markerEnd="url(#a1)"/>
-          <defs><marker id="a1" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <rect x="218" y="40" width="76" height="80" rx="6" fill="#161b22" stroke="#30363d" strokeWidth="1"/>
-          <circle cx="245" cy="60" r="10" fill="#30363d"/>
-          <text x="237" y="64" fill="#8b949e" fontSize="9">👤</text>
-          <text x="225" y="80" fill="#f0f6fc" fontSize="7" fontFamily="sans-serif">username</text>
-          <line x1="222" y1="86" x2="290" y2="86" stroke="#30363d" strokeWidth="1"/>
-          <text x="225" y="97" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Your profile</text>
-          <text x="225" y="109" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Repositories</text>
-          <line x1="222" y1="114" x2="290" y2="114" stroke="#30363d" strokeWidth="1"/>
-          <rect x="222" y="118" width="70" height="14" rx="3" fill="#1f6feb" opacity="0.25" stroke="#1f6feb" strokeWidth="1"/>
-          <text x="226" y="128" fill="#58a6ff" fontSize="8" fontFamily="sans-serif" fontWeight="bold">⚙ Settings</text>
-        </svg>
-      ),
+      screen: 'github', highlight: 'avatar',
     },
     {
-      title: 'גלול לתחתית → "Developer settings"',
-      desc: 'בדף ה-Settings, גלול בסרגל הצד השמאלי עד לתחתית ולחץ על "Developer settings".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <rect x="0" y="0" width="95" height="150" fill="#161b22" stroke="#30363d" strokeWidth="0.5"/>
-          <text x="8" y="16" fill="#f0f6fc" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Settings</text>
-          <rect x="5" y="22" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="35" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="48" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="61" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="74" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="87" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <rect x="5" y="100" width="85" height="9" rx="2" fill="#30363d" opacity="0.4"/>
-          <line x1="5" y1="116" x2="90" y2="116" stroke="#30363d" strokeWidth="1"/>
-          <rect x="5" y="120" width="85" height="18" rx="4" fill="#1f6feb" opacity="0.2" stroke="#1f6feb" strokeWidth="1"/>
-          <text x="9" y="132" fill="#58a6ff" fontSize="8" fontFamily="sans-serif" fontWeight="bold">{'</>'} Developer settings</text>
-          <path d="M100 129 L96 129" stroke="#f78166" strokeWidth="2" markerEnd="url(#a2)"/>
-          <defs><marker id="a2" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="104" y="125" fill="#f78166" fontSize="9" fontFamily="sans-serif">← גלול למטה</text>
-          <text x="104" y="137" fill="#f78166" fontSize="9" fontFamily="sans-serif">ולחץ כאן</text>
-        </svg>
-      ),
+      title: 'לחץ על "Settings" מהתפריט',
+      desc: 'מהתפריט הנפתח שנפתח, בחר ב-Settings (הגדרות חשבון).',
+      screen: 'github-dropdown', highlight: 'settings',
     },
     {
-      title: 'בחר "Personal access tokens" ← "Tokens (classic)"',
-      desc: 'בדף Developer Settings לחץ על "Personal access tokens" ואז על "Tokens (classic)".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <rect x="0" y="0" width="105" height="150" fill="#161b22" stroke="#30363d" strokeWidth="0.5"/>
-          <text x="8" y="16" fill="#f0f6fc" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Developer Settings</text>
-          <rect x="5" y="22" width="95" height="11" rx="3" fill="#30363d" opacity="0.4"/>
-          <text x="9" y="31" fill="#8b949e" fontSize="7" fontFamily="sans-serif">GitHub Apps</text>
-          <rect x="5" y="37" width="95" height="11" rx="3" fill="#30363d" opacity="0.4"/>
-          <text x="9" y="46" fill="#8b949e" fontSize="7" fontFamily="sans-serif">OAuth Apps</text>
-          <rect x="5" y="52" width="95" height="11" rx="3" fill="#1f6feb" opacity="0.15" stroke="#1f6feb" strokeWidth="1"/>
-          <text x="9" y="61" fill="#58a6ff" fontSize="7" fontFamily="sans-serif">Personal access tokens ▾</text>
-          <rect x="12" y="67" width="88" height="11" rx="3" fill="#30363d" opacity="0.4"/>
-          <text x="16" y="76" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Fine-grained tokens</text>
-          <rect x="12" y="82" width="88" height="13" rx="3" fill="#388bfd" opacity="0.2" stroke="#388bfd" strokeWidth="1"/>
-          <text x="16" y="92" fill="#79c0ff" fontSize="8" fontFamily="sans-serif" fontWeight="bold">✓ Tokens (classic)</text>
-          <path d="M108 88 L104 88" stroke="#f78166" strokeWidth="2" markerEnd="url(#a3)"/>
-          <defs><marker id="a3" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="112" y="85" fill="#f78166" fontSize="9" fontFamily="sans-serif">← לחץ כאן</text>
-        </svg>
-      ),
+      title: 'גלול למטה ← "Developer settings"',
+      desc: 'בסרגל הצד השמאלי, גלול לגמרי למטה ולחץ על Developer settings.',
+      screen: 'github-settings', highlight: 'devsettings',
+    },
+    {
+      title: '"Personal access tokens" ← "Tokens (classic)"',
+      desc: 'לחץ על Personal access tokens ואז על Tokens (classic).',
+      screen: 'github-devsettings', highlight: 'classic',
     },
     {
       title: 'לחץ "Generate new token (classic)"',
-      desc: 'בדף ה-Tokens, לחץ על הכפתור "Generate new token" ובחר "classic".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <rect x="0" y="0" width="300" height="36" fill="#161b22" stroke="#30363d" strokeWidth="0.5"/>
-          <text x="10" y="22" fill="#f0f6fc" fontSize="10" fontFamily="sans-serif" fontWeight="bold">Personal access tokens (classic)</text>
-          <rect x="190" y="7" width="102" height="22" rx="5" fill="#238636" opacity="0.9"/>
-          <text x="198" y="21" fill="white" fontSize="7" fontFamily="sans-serif" fontWeight="bold">Generate new token ▾</text>
-          <rect x="228" y="31" width="72" height="28" rx="4" fill="#161b22" stroke="#30363d" strokeWidth="1"/>
-          <rect x="232" y="34" width="64" height="11" rx="2" fill="#30363d" opacity="0.5"/>
-          <text x="236" y="42" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Fine-grained token</text>
-          <rect x="232" y="47" width="64" height="11" rx="2" fill="#1f6feb" opacity="0.2" stroke="#1f6feb" strokeWidth="1"/>
-          <text x="236" y="55" fill="#58a6ff" fontSize="8" fontFamily="sans-serif" fontWeight="bold">✓ classic</text>
-          <path d="M265 62 L265 59" stroke="#f78166" strokeWidth="2" markerEnd="url(#a4)"/>
-          <defs><marker id="a4" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="115" y="80" fill="#f78166" fontSize="9" fontFamily="sans-serif" textAnchor="middle">בחר "classic" ↗</text>
-        </svg>
-      ),
+      desc: 'בדף הטוקנים, לחץ Generate new token ובחר classic.',
+      screen: 'github-tokens', highlight: 'generate',
     },
     {
-      title: 'סמן "repo" תחת Scopes ולחץ Generate',
-      desc: 'תן שם לטוקן, בחר תפוגה, ותחת "Select scopes" סמן ✅ repo. גלול למטה ולחץ "Generate token".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <text x="10" y="15" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Note (שם הטוקן)</text>
-          <rect x="10" y="18" width="180" height="15" rx="4" fill="#161b22" stroke="#30363d" strokeWidth="1"/>
-          <text x="15" y="29" fill="#f0f6fc" fontSize="8" fontFamily="sans-serif">CloudDeploy</text>
-          <text x="10" y="47" fill="#f0f6fc" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Select scopes</text>
-          <rect x="10" y="53" width="13" height="13" rx="3" fill="#238636"/>
-          <text x="12" y="63" fill="white" fontSize="9" fontFamily="sans-serif" fontWeight="bold">✓</text>
-          <text x="27" y="63" fill="#f0f6fc" fontSize="8" fontFamily="sans-serif" fontWeight="bold">repo</text>
-          <text x="75" y="63" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Full control of private repos</text>
-          <rect x="10" y="70" width="13" height="13" rx="3" fill="#21262d" stroke="#30363d" strokeWidth="1"/>
-          <text x="27" y="80" fill="#8b949e" fontSize="8" fontFamily="sans-serif">workflow</text>
-          <rect x="10" y="87" width="13" height="13" rx="3" fill="#21262d" stroke="#30363d" strokeWidth="1"/>
-          <text x="27" y="97" fill="#8b949e" fontSize="8" fontFamily="sans-serif">admin:org</text>
-          <rect x="170" y="128" width="120" height="16" rx="5" fill="#238636"/>
-          <text x="190" y="139" fill="white" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Generate token ✓</text>
-          <path d="M158 136 L168 136" stroke="#f78166" strokeWidth="2" markerEnd="url(#a5)"/>
-          <defs><marker id="a5" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-        </svg>
-      ),
+      title: 'סמן ✅ repo ולחץ Generate token',
+      desc: 'תן שם לטוקן, בחר תפוגה, סמן repo תחת Scopes, ולחץ Generate token בתחתית.',
+      screen: 'github-newtoken', highlight: 'repo',
     },
     {
-      title: 'העתק את הטוקן — מוצג פעם אחת בלבד!',
-      desc: 'הטוקן מתחיל ב-ghp_ ויוצג רק עכשיו. העתק אותו ושמור. הדבק בשדה "Personal Access Token" בהגדרות.',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#0d1117"/>
-          <rect x="10" y="10" width="280" height="40" rx="8" fill="#0d419d" opacity="0.35" stroke="#1f6feb" strokeWidth="1"/>
-          <text x="18" y="26" fill="#58a6ff" fontSize="8" fontFamily="sans-serif" fontWeight="bold">⚠ Make sure to copy your token now</text>
-          <text x="18" y="40" fill="#8b949e" fontSize="7" fontFamily="sans-serif">You won't be able to see it again!</text>
-          <rect x="10" y="62" width="248" height="22" rx="6" fill="#161b22" stroke="#388bfd" strokeWidth="1.5"/>
-          <text x="16" y="76" fill="#79c0ff" fontSize="8" fontFamily="monospace">ghp_xxxxxxxxxxxxxxxxxxxxxxxxxx</text>
-          <rect x="264" y="62" width="28" height="22" rx="5" fill="#21262d" stroke="#30363d" strokeWidth="1"/>
-          <text x="272" y="76" fill="#8b949e" fontSize="11">⎘</text>
-          <path d="M256 73 L262 73" stroke="#f78166" strokeWidth="2" markerEnd="url(#a6)"/>
-          <defs><marker id="a6" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="148" y="112" fill="#f78166" fontSize="10" fontFamily="sans-serif" textAnchor="middle" fontWeight="bold">העתק עכשיו!</text>
-          <text x="148" y="128" fill="#8b949e" fontSize="8" fontFamily="sans-serif" textAnchor="middle">הדבק בשדה Personal Access Token</text>
-        </svg>
-      ),
+      title: '⚠️ העתק את הטוקן — מוצג פעם אחת בלבד!',
+      desc: 'הטוקן מתחיל ב-ghp_ ויוצג רק עכשיו. העתק ושמור אותו. הדבק בשדה Personal Access Token בהגדרות.',
+      screen: 'github-copy', highlight: 'token',
     },
   ];
 
-  // ── Cloudflare Guide Steps ────────────────────────────────────────────────
+  // ── Guide Steps: Cloudflare ───────────────────────────────────────────────
   const cloudflareGuideSteps = [
     {
       title: 'כנס ל-Cloudflare Dashboard',
       desc: 'עבור לאתר dash.cloudflare.com והתחבר לחשבונך.',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <rect x="0" y="0" width="300" height="42" fill="#2a2a2e"/>
-          <text x="14" y="26" fill="#f6821f" fontSize="12" fontFamily="sans-serif" fontWeight="bold">☁ Cloudflare</text>
-          <rect x="210" y="11" width="80" height="20" rx="5" fill="#f6821f" opacity="0.85"/>
-          <text x="226" y="24" fill="white" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Log in →</text>
-          <rect x="14" y="55" width="125" height="55" rx="8" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="24" y="76" fill="#f0f0f0" fontSize="9" fontFamily="sans-serif" fontWeight="bold">Account Home</text>
-          <text x="24" y="90" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Websites · Pages · Workers</text>
-          <text x="24" y="102" fill="#f6821f" fontSize="8" fontFamily="sans-serif">→ כנס כאן</text>
-          <text x="40" y="130" fill="#8b8b8e" fontSize="8" fontFamily="sans-serif" textAnchor="middle">dash.cloudflare.com</text>
-        </svg>
-      ),
+      screen: 'cf-home', highlight: 'login',
     },
     {
       title: 'מצא את ה-Account ID בסרגל הצד',
-      desc: 'בדף הבית, בסרגל הצד הימני תחת "Account ID" — לחץ לצד המספר להעתקה. שמור אותו!',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <rect x="200" y="0" width="100" height="150" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="0.5"/>
-          <text x="208" y="16" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif" fontWeight="bold">ACCOUNT ID</text>
-          <rect x="206" y="20" width="88" height="20" rx="4" fill="#1c1c1e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="210" y="33" fill="#f0f0f0" fontSize="7" fontFamily="monospace">a1b2c3d4e5f6g7...</text>
-          <rect x="272" y="22" width="18" height="16" rx="3" fill="#f6821f" opacity="0.3" stroke="#f6821f" strokeWidth="1"/>
-          <text x="276" y="33" fill="#f6821f" fontSize="8">⎘</text>
-          <path d="M190 30 L204 30" stroke="#f78166" strokeWidth="2" markerEnd="url(#b1)"/>
-          <defs><marker id="b1" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="60" y="24" fill="#f78166" fontSize="9" fontFamily="sans-serif" textAnchor="middle">Account ID כאן →</text>
-          <text x="60" y="36" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif" textAnchor="middle">סרגל צד ימני</text>
-        </svg>
-      ),
+      desc: 'בדף הבית, בסרגל הצד הימני תחת "Account ID" — לחץ להעתקה. שמור אותו!',
+      screen: 'cf-accountid', highlight: 'accountid',
     },
     {
-      title: 'לחץ על פרופיל → "My Profile"',
-      desc: 'לחץ על תמונת הפרופיל בפינה הימנית העליונה ובחר "My Profile".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <rect x="0" y="0" width="300" height="38" fill="#2a2a2e"/>
-          <text x="14" y="23" fill="#f6821f" fontSize="11" fontFamily="sans-serif" fontWeight="bold">☁ Cloudflare</text>
-          <circle cx="278" cy="19" r="12" fill="#f6821f" opacity="0.6"/>
-          <text x="272" y="23" fill="white" fontSize="10" fontFamily="sans-serif">U</text>
-          <rect x="216" y="40" width="80" height="70" rx="6" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="224" y="56" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">user@email.com</text>
-          <line x1="220" y1="62" x2="292" y2="62" stroke="#3a3a3e" strokeWidth="1"/>
-          <rect x="220" y="66" width="72" height="14" rx="3" fill="#f6821f" opacity="0.2" stroke="#f6821f" strokeWidth="1"/>
-          <text x="224" y="76" fill="#f6821f" fontSize="8" fontFamily="sans-serif" fontWeight="bold">My Profile</text>
-          <text x="224" y="93" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Billing</text>
-          <text x="224" y="105" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Logout</text>
-          <path d="M190 73 L214 73" stroke="#f78166" strokeWidth="2" markerEnd="url(#b2)"/>
-          <defs><marker id="b2" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="100" y="77" fill="#f78166" fontSize="9" fontFamily="sans-serif">My Profile →</text>
-        </svg>
-      ),
+      title: 'לחץ על פרופיל ← "My Profile"',
+      desc: 'לחץ על תמונת הפרופיל בפינה הימנית העליונה ובחר My Profile.',
+      screen: 'cf-profile', highlight: 'profile',
     },
     {
       title: 'לחץ על לשונית "API Tokens"',
-      desc: 'בדף My Profile, לחץ על הלשונית "API Tokens" ואז על "Create Token".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <rect x="0" y="0" width="300" height="38" fill="#2a2a2e"/>
-          <rect x="10" y="10" width="60" height="18" rx="4" fill="#3a3a3e" opacity="0.6"/>
-          <text x="18" y="22" fill="#8b8b8e" fontSize="8" fontFamily="sans-serif">Preferences</text>
-          <rect x="80" y="10" width="70" height="18" rx="4" fill="#f6821f" opacity="0.15" stroke="#f6821f" strokeWidth="1"/>
-          <text x="88" y="22" fill="#f6821f" fontSize="8" fontFamily="sans-serif" fontWeight="bold">API Tokens</text>
-          <text x="14" y="58" fill="#f0f0f0" fontSize="10" fontFamily="sans-serif" fontWeight="bold">API Tokens</text>
-          <rect x="190" y="46" width="100" height="20" rx="5" fill="#f6821f" opacity="0.85"/>
-          <text x="206" y="59" fill="white" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Create Token +</text>
-          <path d="M180 56 L188 56" stroke="#f78166" strokeWidth="2" markerEnd="url(#b3)"/>
-          <defs><marker id="b3" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="86" y="60" fill="#f78166" fontSize="8" fontFamily="sans-serif">← גם לחץ על הלשונית</text>
-        </svg>
-      ),
+      desc: 'בדף My Profile, לחץ על הלשונית API Tokens.',
+      screen: 'cf-apitokens', highlight: 'tab',
     },
     {
-      title: 'בחר תבנית "Edit Cloudflare Workers"',
-      desc: 'גלול למטה ומצא "Edit Cloudflare Workers". לחץ "Use template" — זה כולל הרשאות Pages:Edit.',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <text x="12" y="16" fill="#f0f0f0" fontSize="9" fontFamily="sans-serif" fontWeight="bold">API token templates</text>
-          <rect x="10" y="22" width="280" height="36" rx="6" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="18" y="37" fill="#f0f0f0" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Edit Cloudflare Workers</text>
-          <text x="18" y="49" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Workers:Edit · Pages:Edit · Account:Read</text>
-          <rect x="236" y="26" width="46" height="18" rx="4" fill="#f6821f" opacity="0.85"/>
-          <text x="242" y="37" fill="white" fontSize="7" fontFamily="sans-serif" fontWeight="bold">Use template</text>
-          <rect x="10" y="64" width="280" height="36" rx="6" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="18" y="79" fill="#8b8b8e" fontSize="8" fontFamily="sans-serif">Read all resources</text>
-          <text x="18" y="91" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Read-only access</text>
-          <rect x="236" y="68" width="46" height="18" rx="4" fill="#3a3a3e"/>
-          <text x="242" y="79" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Use template</text>
-          <path d="M228 35 L234 35" stroke="#f78166" strokeWidth="2" markerEnd="url(#b4)"/>
-          <defs><marker id="b4" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="60" y="115" fill="#f78166" fontSize="8" fontFamily="sans-serif" textAnchor="middle">לחץ "Use template" ↗ על השורה הראשונה</text>
-        </svg>
-      ),
+      title: 'לחץ "Create Token"',
+      desc: 'לחץ על הכפתור הכחול Create Token.',
+      screen: 'cf-createtoken', highlight: 'button',
     },
     {
-      title: 'לחץ "Continue to summary" ← "Create Token"',
-      desc: 'ודא שהרשאות כוללות Pages:Edit. לחץ "Continue to summary" ואז "Create Token".',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <text x="12" y="16" fill="#f0f0f0" fontSize="9" fontFamily="sans-serif" fontWeight="bold">Token Summary</text>
-          <rect x="10" y="22" width="280" height="72" rx="6" fill="#2a2a2e" stroke="#3a3a3e" strokeWidth="1"/>
-          <text x="18" y="38" fill="#8b8b8e" fontSize="7" fontFamily="sans-serif">Permissions</text>
-          <text x="18" y="52" fill="#f0f0f0" fontSize="8" fontFamily="sans-serif">✓ Account · Cloudflare Pages · Edit</text>
-          <text x="18" y="65" fill="#f0f0f0" fontSize="8" fontFamily="sans-serif">✓ Account · Workers Scripts · Edit</text>
-          <text x="18" y="78" fill="#f0f0f0" fontSize="8" fontFamily="sans-serif">✓ User · API Tokens · Edit</text>
-          <rect x="160" y="108" width="130" height="22" rx="5" fill="#f6821f" opacity="0.85"/>
-          <text x="180" y="122" fill="white" fontSize="8" fontFamily="sans-serif" fontWeight="bold">Create Token →</text>
-          <path d="M148 119 L158 119" stroke="#f78166" strokeWidth="2" markerEnd="url(#b5)"/>
-          <defs><marker id="b5" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-        </svg>
-      ),
+      title: 'בחר "Edit Cloudflare Workers" ← Use template',
+      desc: 'גלול למצא Edit Cloudflare Workers ולחץ Use template — זה כולל הרשאות Pages:Edit.',
+      screen: 'cf-template', highlight: 'template',
     },
     {
-      title: 'העתק את ה-API Token — מוצג פעם אחת!',
-      desc: 'ה-Token יוצג רק עכשיו. העתק ושמור אותו. הדבק בשדה "API Token" בהגדרות האפליקציה.',
-      img: (
-        <svg viewBox="0 0 300 150" className="w-full rounded-xl border border-white/10">
-          <rect width="300" height="150" fill="#1c1c1e"/>
-          <rect x="10" y="10" width="280" height="40" rx="8" fill="#135716" opacity="0.35" stroke="#238636" strokeWidth="1"/>
-          <text x="18" y="26" fill="#3fb950" fontSize="8" fontFamily="sans-serif" fontWeight="bold">✓ API Token created successfully</text>
-          <text x="18" y="40" fill="#8b949e" fontSize="7" fontFamily="sans-serif">Copy your token — it won't be shown again!</text>
-          <rect x="10" y="62" width="252" height="22" rx="6" fill="#2a2a2e" stroke="#f6821f" strokeWidth="1.5"/>
-          <text x="16" y="76" fill="#f0f0f0" fontSize="8" fontFamily="monospace">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</text>
-          <rect x="268" y="62" width="24" height="22" rx="5" fill="#f6821f" opacity="0.8"/>
-          <text x="275" y="76" fill="white" fontSize="10">⎘</text>
-          <path d="M258 73 L266 73" stroke="#f78166" strokeWidth="2" markerEnd="url(#b6)"/>
-          <defs><marker id="b6" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#f78166"/></marker></defs>
-          <text x="148" y="110" fill="#f78166" fontSize="10" fontFamily="sans-serif" textAnchor="middle" fontWeight="bold">העתק עכשיו!</text>
-          <text x="148" y="126" fill="#8b8b8e" fontSize="8" fontFamily="sans-serif" textAnchor="middle">הדבק בשדה "API Token" באפליקציה</text>
-        </svg>
-      ),
+      title: '⚠️ העתק את ה-API Token — מוצג פעם אחת!',
+      desc: 'לאחר לחיצה Create Token, העתק את ה-token המוצג. הדבק בשדה API Token בהגדרות.',
+      screen: 'cf-copy', highlight: 'token',
     },
   ];
 
-  // ── Guide Modal State ────────────────────────────────────────────────────
+    // ── Guide Mock Screens ──────────────────────────────────────────────────
+  const GuideMockup = ({ screen, highlight }: { screen: string; highlight: string }) => {
+    const isGh = screen.startsWith('github') || screen.startsWith('gh');
+    const bg = isGh ? '#0d1117' : '#111111';
+    const headerBg = isGh ? '#161b22' : '#1a1a1a';
+    const accent = isGh ? '#238636' : '#f6821f';
+    const accentText = isGh ? '#3fb950' : '#f6821f';
+    const border = isGh ? '#30363d' : '#2a2a2a';
+
+    const Badge = ({ text, color = accent }: { text: string; color?: string }) => (
+      <span style={{ background: color + '33', border: `1px solid ${color}55`, color, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, display: 'inline-block' }}>
+        {text}
+      </span>
+    );
+
+    const Row = ({ text, active, indent = false }: { text: string; active?: boolean; indent?: boolean }) => (
+      <div style={{ padding: '7px 10px', paddingLeft: indent ? 22 : 10, background: active ? accent + '22' : 'transparent', border: active ? `1px solid ${accent}44` : '1px solid transparent', borderRadius: 6, fontSize: 11, color: active ? accentText : '#8b949e', marginBottom: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>{text}</span>
+        {active && <Badge text="← כאן" color={accent} />}
+      </div>
+    );
+
+    const screens: Record<string, React.ReactNode> = {
+      'github': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: '#f0f6fc', fontWeight: 700, fontSize: 12 }}>github.com</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: accent + '44', border: `2px solid ${accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>👤</div>
+              {highlight === 'avatar' && <Badge text="לחץ כאן!" color={accent} />}
+            </div>
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ color: '#8b949e', fontSize: 11 }}>ברוך הבא ל-GitHub — לחץ על תמונת הפרופיל שלך ↗</div>
+          </div>
+        </div>
+      ),
+      'github-dropdown': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: '#f0f6fc', fontWeight: 700, fontSize: 12 }}>github.com</span>
+          </div>
+          <div style={{ padding: 8 }}>
+            <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 8, padding: 8, marginLeft: 'auto', width: 160 }}>
+              <div style={{ textAlign: 'center', padding: '4px 0 8px', color: '#8b949e', fontSize: 10, borderBottom: `1px solid ${border}`, marginBottom: 6 }}>username</div>
+              <Row text="Your profile" />
+              <Row text="Your repositories" />
+              <Row text="Your projects" />
+              <div style={{ height: 1, background: border, margin: '4px 0' }} />
+              <Row text="⚙ Settings" active={highlight === 'settings'} />
+            </div>
+          </div>
+        </div>
+      ),
+      'github-settings': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace', display: 'flex' }}>
+          <div style={{ width: 130, background: headerBg, borderRight: `1px solid ${border}`, padding: 8 }}>
+            <div style={{ color: '#f0f6fc', fontSize: 10, fontWeight: 700, marginBottom: 6 }}>Account Settings</div>
+            <Row text="Profile" /><Row text="Account" /><Row text="Appearance" /><Row text="Accessibility" />
+            <Row text="Notifications" /><Row text="Billing" /><Row text="SSH and GPG" />
+            <div style={{ height: 1, background: border, margin: '6px 0' }} />
+            <Row text="</> Developer settings" active={highlight === 'devsettings'} />
+          </div>
+          <div style={{ flex: 1, padding: 12, color: '#8b949e', fontSize: 11 }}>גלול למטה בסרגל ←</div>
+        </div>
+      ),
+      'github-devsettings': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace', display: 'flex' }}>
+          <div style={{ width: 140, background: headerBg, borderRight: `1px solid ${border}`, padding: 8 }}>
+            <div style={{ color: '#f0f6fc', fontSize: 10, fontWeight: 700, marginBottom: 6 }}>Developer Settings</div>
+            <Row text="GitHub Apps" /><Row text="OAuth Apps" />
+            <Row text="Personal access tokens" />
+            <Row text="Fine-grained" indent />
+            <Row text="Tokens (classic)" indent active={highlight === 'classic'} />
+          </div>
+          <div style={{ flex: 1, padding: 12, color: '#8b949e', fontSize: 11 }}>בחר Tokens (classic) ←</div>
+        </div>
+      ),
+      'github-tokens': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#f0f6fc', fontSize: 11, fontWeight: 700 }}>Personal access tokens (classic)</span>
+            {highlight === 'generate' && (
+              <div style={{ background: accent, borderRadius: 6, padding: '4px 10px', fontSize: 10, color: 'white', fontWeight: 700 }}>Generate new token ▾</div>
+            )}
+          </div>
+          <div style={{ padding: 12 }}>
+            {highlight === 'generate' && (
+              <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 6, padding: 8, width: 160, marginLeft: 'auto' }}>
+                <Row text="Fine-grained token" />
+                <Row text="classic ✓" active />
+              </div>
+            )}
+            <div style={{ color: '#8b949e', fontSize: 11, marginTop: 8 }}>לחץ Generate new token ← classic ↗</div>
+          </div>
+        </div>
+      ),
+      'github-newtoken': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: '#f0f6fc', fontSize: 11, fontWeight: 700 }}>New personal access token (classic)</span>
+          </div>
+          <div style={{ padding: 12, space: 8 }}>
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ color: '#8b949e', fontSize: 10, marginBottom: 3 }}>Note</div>
+              <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 6, padding: '6px 10px', color: '#f0f6fc', fontSize: 11 }}>CloudDeploy Token</div>
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ color: '#f0f6fc', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Select scopes</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', background: accent + '22', border: `1px solid ${accent}44`, borderRadius: 6 }}>
+                <div style={{ width: 14, height: 14, background: accent, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'white' }}>✓</div>
+                <span style={{ color: '#f0f6fc', fontSize: 11, fontWeight: 700 }}>repo</span>
+                <span style={{ color: '#8b949e', fontSize: 10 }}>Full control of private repos</span>
+              </div>
+            </div>
+            <div style={{ background: accent, borderRadius: 6, padding: '6px 12px', fontSize: 11, color: 'white', fontWeight: 700, display: 'inline-block' }}>Generate token ✓</div>
+          </div>
+        </div>
+      ),
+      'github-copy': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'monospace' }}>
+          <div style={{ background: '#0d419d55', border: `1px solid #1f6feb`, borderRadius: 8, margin: 8, padding: 10 }}>
+            <div style={{ color: '#58a6ff', fontSize: 11, fontWeight: 700 }}>✓ Make sure to copy your token now</div>
+            <div style={{ color: '#8b949e', fontSize: 10, marginTop: 3 }}>You won't be able to see it again!</div>
+          </div>
+          <div style={{ padding: '4px 8px 10px', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ flex: 1, background: headerBg, border: `1px solid #388bfd`, borderRadius: 6, padding: '7px 10px', color: '#79c0ff', fontSize: 11 }}>ghp_xxxxxxxxxxxxxxxxxxxxxxxx</div>
+            <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 6, padding: '7px 10px', fontSize: 13, cursor: 'pointer' }}>⎘</div>
+          </div>
+          <div style={{ textAlign: 'center', color: accent, fontSize: 11, fontWeight: 700, paddingBottom: 8 }}>← העתק את הטוקן כאן!</div>
+        </div>
+      ),
+      'cf-home': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: accent, fontWeight: 700, fontSize: 13 }}>☁ Cloudflare</span>
+            <div style={{ background: accent, borderRadius: 6, padding: '4px 12px', fontSize: 10, color: 'white', fontWeight: 700 }}>Log in →</div>
+          </div>
+          <div style={{ padding: 12 }}>
+            <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 8, padding: 12 }}>
+              <div style={{ color: '#f0f0f0', fontWeight: 700, fontSize: 12, marginBottom: 4 }}>Account Home</div>
+              <div style={{ color: '#8b8b8e', fontSize: 10 }}>dash.cloudflare.com</div>
+            </div>
+          </div>
+        </div>
+      ),
+      'cf-accountid': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif', display: 'flex' }}>
+          <div style={{ flex: 1, padding: 12, color: '#8b8b8e', fontSize: 11 }}>תוכן הדשבורד</div>
+          <div style={{ width: 140, background: headerBg, borderLeft: `1px solid ${border}`, padding: 10 }}>
+            <div style={{ color: '#8b8b8e', fontSize: 9, fontWeight: 700, marginBottom: 4 }}>ACCOUNT ID</div>
+            <div style={{ background: bg, border: `1px solid ${highlight === 'accountid' ? accent : border}`, borderRadius: 6, padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#f0f0f0', fontSize: 9, fontFamily: 'monospace' }}>a1b2c3d4...</span>
+              <span style={{ color: accent, fontSize: 12, cursor: 'pointer' }}>⎘</span>
+            </div>
+            {highlight === 'accountid' && <div style={{ color: accent, fontSize: 9, fontWeight: 700, marginTop: 4 }}>← העתק כאן!</div>}
+          </div>
+        </div>
+      ),
+      'cf-profile': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: accent, fontWeight: 700 }}>☁ Cloudflare</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: accent + '66', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>U</div>
+              {highlight === 'profile' && <Badge text="לחץ!" color={accent} />}
+            </div>
+          </div>
+          <div style={{ padding: 8, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 8, padding: 8, width: 140 }}>
+              <div style={{ color: '#8b8b8e', fontSize: 10, borderBottom: `1px solid ${border}`, paddingBottom: 6, marginBottom: 6 }}>user@email.com</div>
+              <Row text="My Profile" active={highlight === 'profile'} />
+              <Row text="Billing" /><Row text="Logout" />
+            </div>
+          </div>
+        </div>
+      ),
+      'cf-apitokens': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', display: 'flex', gap: 8, borderBottom: `1px solid ${border}` }}>
+            <div style={{ padding: '4px 10px', borderRadius: 6, background: '#3a3a3a', color: '#8b8b8e', fontSize: 11 }}>Preferences</div>
+            <div style={{ padding: '4px 10px', borderRadius: 6, background: accent + '22', border: `1px solid ${accent}55`, color: accentText, fontSize: 11, fontWeight: 700 }}>API Tokens ←</div>
+          </div>
+          <div style={{ padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#f0f0f0', fontWeight: 700, fontSize: 13 }}>API Tokens</span>
+            <div style={{ background: accent, borderRadius: 6, padding: '5px 12px', fontSize: 11, color: 'white', fontWeight: 700 }}>Create Token +</div>
+          </div>
+        </div>
+      ),
+      'cf-createtoken': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#f0f0f0', fontWeight: 700, fontSize: 12 }}>API Tokens</span>
+            <div style={{ background: accent, borderRadius: 6, padding: '5px 12px', fontSize: 11, color: 'white', fontWeight: 700 }}>Create Token +</div>
+          </div>
+          <div style={{ padding: 12, color: '#8b8b8e', fontSize: 11 }}>לחץ על Create Token ↗</div>
+        </div>
+      ),
+      'cf-template': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: headerBg, padding: '8px 12px', borderBottom: `1px solid ${border}` }}>
+            <span style={{ color: '#f0f0f0', fontWeight: 700, fontSize: 12 }}>API token templates</span>
+          </div>
+          <div style={{ padding: 8 }}>
+            <div style={{ background: headerBg, border: `1px solid ${accent}`, borderRadius: 8, padding: 10, marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: '#f0f0f0', fontWeight: 700, fontSize: 11 }}>Edit Cloudflare Workers</div>
+                <div style={{ color: '#8b8b8e', fontSize: 10 }}>Workers:Edit · Pages:Edit · Account:Read</div>
+              </div>
+              <div style={{ background: accent, borderRadius: 6, padding: '4px 10px', fontSize: 10, color: 'white', fontWeight: 700, whiteSpace: 'nowrap' }}>Use template</div>
+            </div>
+            <div style={{ background: headerBg, border: `1px solid ${border}`, borderRadius: 8, padding: 10, opacity: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ color: '#8b8b8e', fontSize: 11 }}>Read all resources</div>
+              <div style={{ background: '#3a3a3a', borderRadius: 6, padding: '4px 10px', fontSize: 10, color: '#8b8b8e' }}>Use template</div>
+            </div>
+            <div style={{ color: accentText, fontSize: 10, fontWeight: 700, textAlign: 'center', marginTop: 8 }}>בחר את הראשון ↑</div>
+          </div>
+        </div>
+      ),
+      'cf-copy': (
+        <div style={{ background: bg, borderRadius: 10, overflow: 'hidden', fontFamily: 'sans-serif' }}>
+          <div style={{ background: '#13571688', border: `1px solid #238636`, borderRadius: 8, margin: 8, padding: 10 }}>
+            <div style={{ color: '#3fb950', fontSize: 11, fontWeight: 700 }}>✓ API Token created successfully</div>
+            <div style={{ color: '#8b949e', fontSize: 10, marginTop: 2 }}>Copy your token — it won't be shown again!</div>
+          </div>
+          <div style={{ padding: '4px 8px 10px', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ flex: 1, background: '#2a2a2a', border: `1px solid ${accent}`, borderRadius: 6, padding: '7px 10px', color: '#f0f0f0', fontSize: 11, fontFamily: 'monospace' }}>xxxxxxxxxxxxxxxxxxxxxxxxx</div>
+            <div style={{ background: '#2a2a2a', border: `1px solid #3a3a3a`, borderRadius: 6, padding: '7px 10px', fontSize: 13 }}>⎘</div>
+          </div>
+          <div style={{ textAlign: 'center', color: accent, fontSize: 11, fontWeight: 700, paddingBottom: 8 }}>← העתק את ה-Token כאן!</div>
+        </div>
+      ),
+    };
+
+    return (
+      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+        {screens[screen] || <div style={{ padding: 16, color: '#666', fontSize: 12, textAlign: 'center' }}>—</div>}
+      </div>
+    );
+  };
+
+  // ── Guide Modal ──────────────────────────────────────────────────────────
   const [guideStep, setGuideStep] = useState(0);
 
   const GuideModal = () => {
@@ -865,6 +892,7 @@ export default function App() {
     const steps = isGithub ? githubGuideSteps : cloudflareGuideSteps;
     const totalSteps = steps.length;
     const step = steps[guideStep];
+    const accentColor = isGithub ? '#3b82f6' : '#f97316';
     return (
       <AnimatePresence>
         {showGuide && (
@@ -873,7 +901,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-end justify-center"
-            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}
             onClick={() => { setShowGuide(null); setGuideStep(0); }}
           >
             <motion.div
@@ -881,45 +909,51 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="w-full max-w-md bg-zinc-950 rounded-t-[32px] border-t border-x border-white/10 overflow-hidden"
+              className="w-full max-w-md bg-zinc-950 rounded-t-[32px] border-t border-x border-white/10 flex flex-col"
+              style={{ maxHeight: '90vh' }}
               onClick={e => e.stopPropagation()}
             >
               {/* Handle */}
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
+
               {/* Header */}
-              <div className="px-6 pt-2 pb-3 flex items-center justify-between">
+              <div className="px-5 pt-2 pb-3 flex items-center justify-between flex-shrink-0">
                 <button onClick={() => { setShowGuide(null); setGuideStep(0); }} className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400">
                   <X size={18} />
                 </button>
                 <div className="text-center">
-                  <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: isGithub ? '#58a6ff' : '#fb923c' }}>
+                  <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: accentColor }}>
                     {isGithub ? 'GitHub' : 'Cloudflare'} — הדרכת חיבור
                   </p>
-                  <p className="text-xs text-zinc-400 mt-0.5">שלב {guideStep + 1} מתוך {totalSteps}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">שלב {guideStep + 1} מתוך {totalSteps}</p>
                 </div>
                 <div className="w-10" />
               </div>
+
               {/* Progress */}
-              <div className="px-6 mb-3">
+              <div className="px-5 mb-4 flex-shrink-0">
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: isGithub ? '#3b82f6' : '#f97316' }}
+                    style={{ background: accentColor }}
                     animate={{ width: `${((guideStep + 1) / totalSteps) * 100}%` }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
-                <div className="flex justify-between mt-1">
+                <div className="flex gap-1 mt-2 justify-center" dir="ltr">
                   {steps.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setGuideStep(i)}
-                      className="w-5 h-5 rounded-full text-[9px] font-bold transition-all flex items-center justify-center"
+                      className="w-6 h-6 rounded-full text-[9px] font-bold transition-all flex items-center justify-center flex-shrink-0"
                       style={{
-                        background: i <= guideStep ? (isGithub ? '#3b82f6' : '#f97316') : 'rgba(255,255,255,0.08)',
-                        color: i <= guideStep ? 'white' : '#666',
+                        background: i < guideStep ? accentColor : i === guideStep ? accentColor : 'rgba(255,255,255,0.08)',
+                        color: i <= guideStep ? 'white' : '#555',
+                        transform: i === guideStep ? 'scale(1.25)' : 'scale(1)',
+                        outline: i === guideStep ? `2px solid ${accentColor}` : 'none',
+                        outlineOffset: 2,
                       }}
                     >
                       {i + 1}
@@ -927,33 +961,48 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              {/* Content */}
-              <div className="px-6 pb-4" style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-5 pb-2 min-h-0 space-y-4">
+                {/* Mockup */}
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={guideStep}
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -30 }}
-                    transition={{ duration: 0.18 }}
-                    className="space-y-4"
+                    key={`screen-${guideStep}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
                   >
-                    {step.img}
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: isGithub ? 'rgba(59,130,246,0.2)' : 'rgba(249,115,22,0.2)', color: isGithub ? '#60a5fa' : '#fb923c' }}>
-                        {guideStep + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
-                        <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{step.desc}</p>
-                      </div>
+                    <GuideMockup screen={(step as any).screen} highlight={(step as any).highlight} />
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Text */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`text-${guideStep}`}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-start gap-3 pb-2"
+                  >
+                    <div
+                      className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mt-0.5"
+                      style={{ background: accentColor + '33', color: accentColor }}
+                    >
+                      {guideStep + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
+                      <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{step.desc}</p>
                     </div>
                   </motion.div>
                 </AnimatePresence>
               </div>
+
               {/* Navigation */}
-              <div className="px-6 pb-8 flex gap-3">
+              <div className="px-5 pt-3 pb-8 flex gap-3 flex-shrink-0 border-t border-white/5">
                 <button
                   onClick={() => setGuideStep(s => Math.max(0, s - 1))}
                   disabled={guideStep === 0}
@@ -964,16 +1013,16 @@ export default function App() {
                 {guideStep < totalSteps - 1 ? (
                   <button
                     onClick={() => setGuideStep(s => s + 1)}
-                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all"
-                    style={{ background: isGithub ? '#2563eb' : '#ea580c' }}
+                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                    style={{ background: accentColor }}
                   >
                     הבא <ChevronLeft size={15} />
                   </button>
                 ) : (
                   <button
                     onClick={() => { setShowGuide(null); setGuideStep(0); }}
-                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-all"
-                    style={{ background: isGithub ? '#2563eb' : '#ea580c' }}
+                    className="flex-[2] py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                    style={{ background: accentColor }}
                   >
                     <CheckCircle2 size={15} /> סיום
                   </button>
@@ -986,6 +1035,7 @@ export default function App() {
     );
   };
 
+  
   return (
     <div className="min-h-screen flex flex-col p-6 max-w-md mx-auto font-sans">
       {/* Header */}
@@ -994,7 +1044,7 @@ export default function App() {
           <div className="w-10 h-10 accent-bg rounded-xl flex items-center justify-center accent-shadow">
             <CloudUpload className="text-white" size={24} />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">CloudDeploy <span className="text-xs font-normal text-zinc-500">v12</span></h1>
+          <h1 className="text-xl font-bold tracking-tight">CloudDeploy <span className="text-xs font-normal text-zinc-500">v16</span></h1>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -2028,7 +2078,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-8 text-center text-zinc-600 text-xs">
-        <p>© 2026 CloudDeploy Mobile v12 • Built with AI</p>
+        <p>© 2026 CloudDeploy Mobile v16 • Built with AI</p>
       </footer>
     </div>
   );
