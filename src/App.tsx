@@ -402,7 +402,9 @@ export default function App() {
             projectName: sanitizedName,
             zipFile: base64Zip,
             branch: branchName,
-            commitMessage: `Deploy ${sanitizedName} from CloudDeploy`
+            commitMessage: `Deploy ${sanitizedName} from CloudDeploy`,
+            cfAccountId: cfAccountId || undefined,
+            cfApiToken: cfToken || undefined,
           })
         });
 
@@ -429,33 +431,20 @@ export default function App() {
           }).catch(err => console.error('Auto-merge error:', err));
         }
 
-        // 4. Deploy directly to Cloudflare (direct upload — no GitHub<->CF OAuth needed)
+        // 4. Cloudflare deployment is handled by GitHub Actions (wrangler pages deploy)
+        //    The workflow file was injected into the repo by github-deploy above.
+        //    We just set the expected URL and move to success.
         if (autoDeployCloudflare && cfToken && cfAccountId) {
           setStep('waiting-cf');
-          setCfStatus('מעלה קבצים ל-Cloudflare...');
-
-          const cfRes = await fetch('/api/deploy-to-cloudflare', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectName: sanitizedName,
-              accountId: cfAccountId,
-              apiToken: cfToken,
-              zipFile: base64Zip,
-              buildOnServer,
-              buildCommand: customBuildCommand,
-              outputDir: customOutputDir
-            })
-          });
-
-          const cfData = await cfRes.json();
-          if (!cfRes.ok) throw new Error(cfData.error || 'פריסה ל-Cloudflare נכשלה');
-
-          setDeployUrl(cfData.url);
-          setPreviewUrl(cfData.previewUrl);
+          setCfStatus('GitHub Actions מריץ את הפריסה ל-Cloudflare...');
+          // Give GitHub a moment to queue the action, then move to success
+          await new Promise(r => setTimeout(r, 2000));
+          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          setPreviewUrl(null);
           setStep('success');
         } else {
-          setDeployUrl(`https://${sanitizedName}.pages.dev`);
+          // CF not configured — GitHub only
+          setDeployUrl(null);
           setStep('success');
         }
       } else {
@@ -574,7 +563,7 @@ export default function App() {
           <div className="w-10 h-10 accent-bg rounded-xl flex items-center justify-center accent-shadow">
             <CloudUpload className="text-white" size={24} />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">CloudDeploy</h1>
+          <h1 className="text-xl font-bold tracking-tight">CloudDeploy <span className="text-xs font-normal text-zinc-500">v10</span></h1>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -776,7 +765,7 @@ export default function App() {
                         פורס ל-Cloudflare...
                       </h2>
                       <p className="text-zinc-400 text-sm font-medium">
-                        הקבצים הועלו ל-GitHub, עכשיו Cloudflare בונה את האתר שלך
+                        GitHub Actions מריץ את Wrangler — האתר יהיה פעיל תוך כ-2 דקות
                       </p>
                     </div>
 
@@ -853,7 +842,7 @@ export default function App() {
                     </div>
                     <div>
                       <h2 className="text-3xl font-bold mb-2">האתר באוויר!</h2>
-                      <p className="text-zinc-400">הפרויקט שלך הועלה בהצלחה</p>
+                      <p className="text-zinc-400">הקבצים הועלו ל-GitHub — Cloudflare יסיים את הפריסה תוך ~2 דקות</p>
                     </div>
 
                     <div className="w-full glass rounded-[40px] p-8 space-y-6 relative overflow-hidden">
@@ -872,6 +861,9 @@ export default function App() {
                             <Copy size={16} />
                           </button>
                         </div>
+                        <p className="text-[11px] text-zinc-500 text-right px-1">
+                          ⏱ GitHub Actions מריץ את הפריסה ברקע — הקישור יהיה פעיל תוך כ-2 דקות
+                        </p>
                       </div>
 
                       {githubUrl && (
@@ -917,16 +909,18 @@ export default function App() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                        <a 
-                          href={deployUrl || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
-                        >
-                          <ExternalLink size={18} />
-                          פתח אתר
-                        </a>
+                      <div className={`grid gap-4 pt-4 ${deployUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        {deployUrl && (
+                          <a 
+                            href={deployUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 bg-white text-black font-bold py-5 rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 text-sm shadow-xl"
+                          >
+                            <ExternalLink size={18} />
+                            פתח אתר
+                          </a>
+                        )}
                         <button 
                           onClick={() => {
                             setView('dashboard');
@@ -1582,7 +1576,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-8 text-center text-zinc-600 text-xs">
-        <p>© 2026 CloudDeploy Mobile • Built with AI</p>
+        <p>© 2026 CloudDeploy Mobile v10 • Built with AI</p>
       </footer>
     </div>
   );
