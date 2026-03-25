@@ -1,5 +1,5 @@
 {
-  "name": "Remix: CloudDeploy Mobile",
-  "description": "Deploy websites to Cloudflare Pages directly from your mobile by uploading a ZIP file.",
+  "name": "CloudDeploy",
+  "description": "Automate deployments from ZIP files to Cloudflare Pages via GitHub API with Hebrew RTL support.",
   "requestFramePermissions": []
 }
