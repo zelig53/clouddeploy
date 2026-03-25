@@ -9,7 +9,7 @@ import {
   Eye, EyeOff, Lock, Unlock, CheckCircle2, AlertCircle, Loader2, Moon, Sun,
   RefreshCw, ExternalLink, GitMerge, Trash2, LayoutGrid, CloudUpload, Smartphone,
   Download, HelpCircle, History, Star, GitBranch, Clock, Globe, Check, BookOpen,
-  Key, Shield, Zap, ChevronRight, ChevronDown
+  Key, Shield, Zap, ChevronRight, ChevronDown, FileText, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
@@ -66,7 +66,8 @@ async function uploadFilesToGithub(
       body: JSON.stringify({ content: f.content, encoding: 'base64' })
     });
     if (!res.ok) { const err = await res.json(); throw new Error(`blob error ${f.path}: ${err.message}`); }
-    blobs.push({ ...(await res.json()), path: f.path, mode: '100644', type: 'blob' });
+    const d = await res.json();
+    blobs.push({ path: f.path, sha: d.sha, mode: '100644', type: 'blob' });
   }
   const branchRes = await fetch(`/api/github/repos/${repo}/branches/${branch}`, { headers: { Authorization: `token ${token}` } });
   if (!branchRes.ok) throw new Error(`failed branch ${branch}`);
@@ -137,6 +138,97 @@ async function extractZip(file: File) {
   return { filesToUpload, hasFunctions, hasPackageJson, packageJsonContent };
 }
 
+// ============================================================
+// --- DeleteConfirmModal (שיפור #3 - מחיקה כפולה עם אישור) ---
+// ============================================================
+function DeleteConfirmModal({ project, settings, onConfirm, onCancel }: {
+  project: Project, settings: AppSettings,
+  onConfirm: () => void, onCancel: () => void
+}) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState('');
+  const [error, setError] = useState('');
+
+  const handleDelete = async () => {
+    setIsDeleting(true); setError('');
+    const errors: string[] = [];
+
+    // 1. Delete from Cloudflare
+    try {
+      setDeleteStatus('מוחק מ-Cloudflare Pages...');
+      const cfRes = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${project.cloudflareProject}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` }
+      });
+      if (!cfRes.ok && cfRes.status !== 404) {
+        const d = await cfRes.json();
+        errors.push(`Cloudflare: ${d.errors?.[0]?.message || cfRes.status}`);
+      }
+    } catch (e: any) { errors.push(`Cloudflare: ${e.message}`); }
+
+    // 2. Delete from GitHub
+    if (project.githubRepo && project.githubRepo !== 'unknown') {
+      try {
+        setDeleteStatus('מוחק מאגר GitHub...');
+        const ghRes = await fetch(`/api/github/repos/${project.githubRepo}`, {
+          method: 'DELETE',
+          headers: { Authorization: `token ${settings.githubToken}` }
+        });
+        if (!ghRes.ok && ghRes.status !== 404) {
+          const d = await ghRes.json();
+          errors.push(`GitHub: ${d.message || ghRes.status}`);
+        }
+      } catch (e: any) { errors.push(`GitHub: ${e.message}`); }
+    }
+
+    setIsDeleting(false);
+    if (errors.length > 0) {
+      setError(`שגיאות:\n${errors.join('\n')}\nהפרויקט הוסר מהרשימה המקומית בכל מקרה.`);
+      setTimeout(() => { onConfirm(); }, 3000);
+    } else {
+      onConfirm();
+    }
+  };
+
+  return (
+    <>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={!isDeleting ? onCancel : undefined} className="fixed inset-0 bg-black/60 z-[200] backdrop-blur-sm" />
+      <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed inset-0 z-[201] flex items-center justify-center p-4">
+        <div className="bg-background border border-border rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-5" dir="rtl">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center shrink-0"><Trash2 className="w-6 h-6 text-red-600" /></div>
+            <div><h3 className="text-lg font-bold">מחיקת פרויקט</h3><p className="text-sm text-muted-foreground">{project.name}</p></div>
+          </div>
+
+          <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 space-y-2 text-sm">
+            <p className="font-semibold text-red-700 dark:text-red-400">פעולה זו תמחק לצמיתות:</p>
+            <div className="flex items-center gap-2 text-muted-foreground"><Github className="w-4 h-4 shrink-0" /><span>מאגר GitHub: <b>{project.githubRepo}</b></span></div>
+            <div className="flex items-center gap-2 text-muted-foreground"><Cloud className="w-4 h-4 shrink-0" /><span>פרויקט Cloudflare: <b>{project.cloudflareProject}</b></span></div>
+          </div>
+
+          {isDeleting && (
+            <div className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3">
+              <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+              <p className="text-sm font-medium">{deleteStatus}</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-300 whitespace-pre-line">{error}</div>
+          )}
+
+          <div className="flex gap-3">
+            <button onClick={handleDelete} disabled={isDeleting} className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+              {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin" /><span>מוחק...</span></> : <><Trash2 className="w-4 h-4" /><span>מחק הכל</span></>}
+            </button>
+            <button onClick={onCancel} disabled={isDeleting} className="px-6 py-3 bg-muted text-foreground rounded-2xl font-bold hover:bg-muted/80 transition-colors disabled:opacity-60">ביטול</button>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
 // --- App ---
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -148,6 +240,7 @@ export default function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   useEffect(() => {
     setIsInstalled(window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
@@ -191,6 +284,13 @@ export default function App() {
   const goBack = () => { if (history.length > 1) { const h = [...history]; h.pop(); setHistory(h); setView(h[h.length - 1]); } else setView('dashboard'); };
   const goHome = () => { setHistory(['dashboard']); setView('dashboard'); };
 
+  const handleDeleteConfirmed = () => {
+    if (projectToDelete) {
+      setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+      setProjectToDelete(null);
+    }
+  };
+
   if (!isInitialized) return null;
 
   return (
@@ -207,8 +307,9 @@ export default function App() {
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><CloudUpload className="w-5 h-5" /></div>
             <h1 className="text-lg font-bold hidden sm:block">CloudDeploy</h1>
+            {/* שיפור #4 - כפתור התקנה קבוע בסרגל */}
             {!isInstalled && deferredPrompt && (
-              <button onClick={handleInstall} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-full transition-colors">
+              <button onClick={handleInstall} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white hover:bg-green-600 rounded-full transition-colors shadow-sm">
                 <Smartphone className="w-4 h-4" /><span className="text-xs font-bold">התקן</span>
               </button>
             )}
@@ -220,10 +321,10 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         <AnimatePresence mode="wait">
-          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(id) => setProjects(prev => prev.filter(p => p.id !== id))} settings={settings} onSync={setProjects} />}
+          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(p) => setProjectToDelete(p)} settings={settings} onSync={setProjects} />}
           {view === 'create' && <CreateProject settings={settings} onSuccess={(p) => { setProjects(prev => [p, ...prev]); navigateTo('dashboard'); }} />}
           {view === 'settings' && <Settings settings={settings} onSave={setSettings} onInstall={handleInstall} isInstallAvailable={!!deferredPrompt && !isInstalled} isInstalled={isInstalled} />}
-          {view === 'project-detail' && selectedProject && <ProjectDetail project={selectedProject} settings={settings} onUpdate={(u) => { setProjects(prev => prev.map(p => p.id === u.id ? u : p)); setSelectedProject(u); }} />}
+          {view === 'project-detail' && selectedProject && <ProjectDetail project={selectedProject} settings={settings} onUpdate={(u) => { setProjects(prev => prev.map(p => p.id === u.id ? u : p)); setSelectedProject(u); }} onDeleteProject={(p) => setProjectToDelete(p)} />}
         </AnimatePresence>
       </main>
 
@@ -238,10 +339,11 @@ export default function App() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowInstallSheet(false)} className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm" />
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-[2.5rem] z-[101] p-8 pb-12 shadow-2xl">
               <div className="max-w-md mx-auto space-y-6">
+                {/* שיפור #5 - אייקון CloudUpload בSheet */}
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0"><Download className="w-8 h-8" /></div>
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0"><CloudUpload className="w-9 h-9" /></div>
                   <div>
-                    <h3 className="text-2xl font-bold">התקינו את האפליקציה</h3>
+                    <h3 className="text-2xl font-bold">התקינו את CloudDeploy</h3>
                     <p className="text-muted-foreground text-sm">גישה מהירה ממסך הבית, גם בלי אינטרנט</p>
                   </div>
                 </div>
@@ -256,32 +358,64 @@ export default function App() {
           </>
         )}
       </AnimatePresence>
+
+      {/* שיפור #3 - Delete Confirm Modal */}
+      <AnimatePresence>
+        {projectToDelete && (
+          <DeleteConfirmModal
+            project={projectToDelete}
+            settings={settings}
+            onConfirm={handleDeleteConfirmed}
+            onCancel={() => setProjectToDelete(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// --- Dashboard ---
+// =================================================================
+// --- Dashboard (שיפור #1 - Pagination + שיפור #3 + שיפור #6) ---
+// =================================================================
 function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, settings, onSync }: {
   projects: Project[], onNewProject: () => void, onSelectProject: (p: Project) => void,
-  onDeleteProject: (id: string) => void, settings: AppSettings, onSync: (p: Project[]) => void
+  onDeleteProject: (p: Project) => void, settings: AppSettings, onSync: (p: Project[]) => void
 }) {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const PER_PAGE = 10;
 
-  const syncProjects = async () => {
-    if (!settings.cloudflareApiKey || !settings.cloudflareAccountId || !settings.githubToken) { alert('נא להגדיר מפתחות API בהגדרות'); return; }
-    setIsSyncing(true); setSyncProgress('מתחבר ל-Cloudflare...');
+  // שיפור #1 - Pagination: טעינת עמוד ספציפי
+  const loadPage = async (page: number, isMore: boolean) => {
+    if (!settings.cloudflareApiKey || !settings.cloudflareAccountId || !settings.githubToken) {
+      alert('נא להגדיר מפתחות API בהגדרות'); return;
+    }
+    if (isMore) setIsLoadingMore(true); else { setIsSyncing(true); setSyncProgress('מתחבר ל-Cloudflare...'); }
     try {
-      setSyncProgress('טוען פרויקטים...');
-      const res = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects`, { headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` } });
+      if (!isMore) setSyncProgress(`טוען פרויקטים (עמוד ${page})...`);
+      const res = await fetch(
+        `/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects?page=${page}&per_page=${PER_PAGE}`,
+        { headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` } }
+      );
       const data = await res.json();
       if (!res.ok || data.success === false) throw new Error(data.errors?.[0]?.message || `שגיאת Cloudflare API`);
-      const allCf = data.result || [];
-      setSyncProgress(`נמצאו ${allCf.length} פרויקטים, טוען פריסות...`);
+      const cfProjects = data.result || [];
+      const ri = data.result_info;
+      const tp = ri?.total_pages || 1;
+      const tc = ri?.total_count || cfProjects.length;
+      setTotalPages(tp);
+      setHasMore(page < tp);
+      setCurrentPage(page);
+
+      if (!isMore) setSyncProgress(`נמצאו ${tc} פרויקטים, טוען פריסות...`);
       const synced: Project[] = [];
-      for (let i = 0; i < allCf.length; i++) {
-        const cf = allCf[i];
-        setSyncProgress(`טוען: ${cf.name} (${i + 1}/${allCf.length})`);
+      for (let i = 0; i < cfProjects.length; i++) {
+        const cf = cfProjects[i];
+        if (!isMore) setSyncProgress(`טוען: ${cf.name} (${i + 1}/${cfProjects.length})`);
         let deps: Deployment[] = [];
         try {
           const dr = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${cf.name}/deployments`, { headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` } });
@@ -314,11 +448,16 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
           deployments: deps
         });
       }
-      onSync(synced);
-      setSyncProgress('');
-      alert(`סונכרנו ${synced.length} פרויקטים בהצלחה!`);
-    } catch (e: any) { alert(`סנכרון נכשל: ${e.message}`); }
-    finally { setIsSyncing(false); setSyncProgress(''); }
+      if (isMore) {
+        // Merge — avoid duplicates
+        onSync([...projects, ...synced.filter(s => !projects.find(p => p.cloudflareProject === s.cloudflareProject))]);
+      } else {
+        onSync(synced);
+        setSyncProgress('');
+        alert(`נטענו ${synced.length} פרויקטים (עמוד ${page}/${tp})`);
+      }
+    } catch (e: any) { alert(`שגיאה: ${e.message}`); }
+    finally { setIsSyncing(false); setIsLoadingMore(false); setSyncProgress(''); }
   };
 
   return (
@@ -329,15 +468,18 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
           <div><h2 className="text-3xl font-bold tracking-tight">לוח בקרה</h2><p className="text-muted-foreground">נהל את הפרויקטים שלך ופרוס ל-Cloudflare Pages</p></div>
         </div>
         <div className="flex gap-3">
-          <button onClick={syncProjects} disabled={isSyncing} className="inline-flex items-center gap-2 bg-muted px-4 py-3 rounded-xl font-semibold hover:bg-muted/80 transition-all disabled:opacity-70">
+          {/* שיפור #6 - Loading state בכפתור סנכרון */}
+          <button onClick={() => loadPage(1, false)} disabled={isSyncing || isLoadingMore} className="inline-flex items-center gap-2 bg-muted px-4 py-3 rounded-xl font-semibold hover:bg-muted/80 transition-all disabled:opacity-70">
             {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-            <span>{isSyncing ? 'מסנכרן...' : 'סנכרן מ-Cloudflare'}</span>
+            <span>{isSyncing ? 'טוען...' : 'סנכרן מ-Cloudflare'}</span>
           </button>
           <button onClick={onNewProject} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
             <Plus className="w-5 h-5" /><span>פרויקט חדש</span>
           </button>
         </div>
       </div>
+
+      {/* שיפור #6 - Progress indicator */}
       <AnimatePresence>
         {syncProgress && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 flex items-center gap-3">
@@ -346,6 +488,7 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
           </motion.div>
         )}
       </AnimatePresence>
+
       {projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-3xl bg-muted/30">
           <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mb-6"><CloudUpload className="w-12 h-12" /></div>
@@ -354,40 +497,57 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
           <button onClick={onNewProject} className="text-primary font-medium hover:underline">לחץ כאן להתחיל</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <motion.div key={project.id} layoutId={project.id} className="group bg-card border border-border rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer" onClick={() => onSelectProject(project)}>
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-3 bg-primary/10 rounded-xl text-primary"><Github className="w-6 h-6" /></div>
-                <div className="flex gap-1">
-                  {project.productionUrl && <a href={project.productionUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Globe className="w-4 h-4" /></a>}
-                  <a href={`https://dash.cloudflare.com/${settings.cloudflareAccountId}/pages/view/${project.cloudflareProject}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Cloud className="w-4 h-4" /></a>
-                  <button onClick={e => { e.stopPropagation(); if (confirm('למחוק פרויקט זה?')) onDeleteProject(project.id); }} className="p-2 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <motion.div key={project.id} layoutId={project.id} className="group bg-card border border-border rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer" onClick={() => onSelectProject(project)}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-primary/10 rounded-xl text-primary"><Github className="w-6 h-6" /></div>
+                  <div className="flex gap-1">
+                    {project.productionUrl && <a href={project.productionUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Globe className="w-4 h-4" /></a>}
+                    <a href={`https://dash.cloudflare.com/${settings.cloudflareAccountId}/pages/view/${project.cloudflareProject}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="p-2 text-muted-foreground hover:text-primary transition-colors"><Cloud className="w-4 h-4" /></a>
+                    {/* שיפור #3 - כפתור מחיקה פותח Modal */}
+                    <button onClick={e => { e.stopPropagation(); onDeleteProject(project); }} className="p-2 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  </div>
                 </div>
-              </div>
-              <h4 className="text-xl font-bold mb-1">{project.name}</h4>
-              <p className="text-sm text-muted-foreground mb-3 font-mono truncate">{project.githubRepo}</p>
-              {project.deployments && project.deployments.length > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3"><History className="w-3.5 h-3.5" /><span>{project.deployments.length} פריסות</span></div>
-              )}
-              <div className="flex items-center gap-2 text-xs">
-                <span className={cn("px-2 py-1 rounded-full font-medium", project.status === 'success' ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground")}>
-                  {project.status === 'success' ? 'פעיל' : 'ממתין'}
-                </span>
-                {project.lastDeployment && <span className="text-muted-foreground">{new Date(project.lastDeployment).toLocaleDateString('he-IL')}</span>}
-              </div>
-              <div className="mt-4 flex items-center justify-end text-primary font-semibold text-sm group-hover:translate-x-[-4px] transition-transform">
-                <span>נהל פרויקט</span><ArrowLeft className="w-4 h-4 mr-1" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                <h4 className="text-xl font-bold mb-1">{project.name}</h4>
+                <p className="text-sm text-muted-foreground mb-3 font-mono truncate">{project.githubRepo}</p>
+                {project.deployments && project.deployments.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3"><History className="w-3.5 h-3.5" /><span>{project.deployments.length} פריסות</span></div>
+                )}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={cn("px-2 py-1 rounded-full font-medium", project.status === 'success' ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground")}>
+                    {project.status === 'success' ? 'פעיל' : 'ממתין'}
+                  </span>
+                  {project.lastDeployment && <span className="text-muted-foreground">{new Date(project.lastDeployment).toLocaleDateString('he-IL')}</span>}
+                </div>
+                <div className="mt-4 flex items-center justify-end text-primary font-semibold text-sm group-hover:translate-x-[-4px] transition-transform">
+                  <span>נהל פרויקט</span><ArrowLeft className="w-4 h-4 mr-1" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* שיפור #1 - כפתור "טען עוד" */}
+          {hasMore && (
+            <div className="flex flex-col items-center gap-2 pt-4">
+              <p className="text-xs text-muted-foreground">מציג {projects.length} פרויקטים — יש עוד</p>
+              <button
+                onClick={() => loadPage(currentPage + 1, true)}
+                disabled={isLoadingMore || isSyncing}
+                className="inline-flex items-center gap-2 bg-card border border-border px-8 py-3 rounded-xl font-semibold hover:bg-muted/50 transition-all disabled:opacity-70 shadow-sm"
+              >
+                {isLoadingMore ? <><Loader2 className="w-5 h-5 animate-spin" /><span>טוען...</span></> : <><ChevronDown className="w-5 h-5" /><span>טען עוד פרויקטים</span></>}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </motion.div>
   );
 }
 
-// --- Settings ---
+// --- Settings (שיפור #4 + #5) ---
 function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled }: {
   settings: AppSettings, onSave: (s: AppSettings) => void,
   onInstall: () => void, isInstallAvailable: boolean, isInstalled: boolean
@@ -420,7 +580,7 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
       const r = await fetch(`/api/cloudflare/accounts/${local.cloudflareAccountId}/pages/projects`, { headers: { 'Authorization': `Bearer ${local.cloudflareApiKey}` } });
       const d = await r.json();
       if (!r.ok || d.success === false) throw new Error(d.errors?.[0]?.message || `שגיאת Cloudflare API`);
-      setTestResult({ success: true, message: `✅ מחובר! נמצאו ${d.result?.length || 0} פרויקטים.` });
+      setTestResult({ success: true, message: `✅ מחובר! נמצאו ${d.result?.length || 0} פרויקטים בעמוד הראשון.` });
     } catch (e: any) { setTestResult({ success: false, message: e.message }); }
     finally { setIsTesting(false); }
   };
@@ -429,15 +589,15 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
     github: {
       label: 'GitHub Token', icon: <Github className="w-5 h-5" />, color: 'from-gray-700 to-gray-900',
       steps: [
-        <span>היכנס ל-<b>GitHub.com</b> ← לחץ על תמונת הפרופיל בפינה הימנית</span>,
-        <span>בחר <b>Settings</b> ← גלול למטה ← לחץ <b>Developer settings</b></span>,
-        <span>בחר <b>Personal access tokens</b> ← <b>Tokens (classic)</b></span>,
+        <span>היכנס ל-<b>GitHub.com</b> ← לחץ על תמונת הפרופיל</span>,
+        <span>בחר <b>Settings</b> ← גלול למטה ← <b>Developer settings</b></span>,
+        <span><b>Personal access tokens</b> ← <b>Tokens (classic)</b></span>,
         <span>לחץ <b>Generate new token (classic)</b></span>,
         <span>שם: "CloudDeploy" | תוקף: "No expiration"</span>,
-        <span>סמן את התיבה <b>repo</b></span>,
+        <span>סמן <b>repo</b> (+ <b>delete_repo</b> למחיקה)</span>,
         <span>לחץ <b>Generate token</b> — <b>העתק מיד!</b></span>,
       ],
-      note: '⚠️ העתק את הטוקן מיד — הוא לא יוצג שוב!'
+      note: '⚠️ סמן גם delete_repo כדי שמחיקת פרויקטים תעבוד!'
     },
     cloudflare: {
       label: 'Cloudflare Token', icon: <Cloud className="w-5 h-5" />, color: 'from-orange-500 to-orange-700',
@@ -455,16 +615,14 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
         </div>,
         <span>לחץ <b>Continue to summary</b> ← <b>Create Token</b> ← העתק!</span>,
       ],
-      note: '⚠️ העתק את הטוקן מיד — הוא לא יוצג שוב!'
+      note: '⚠️ העתק את הטוקן מיד — לא יוצג שוב!'
     },
     account: {
       label: 'Account ID', icon: <Key className="w-5 h-5" />, color: 'from-blue-500 to-blue-700',
       steps: [
         <span>היכנס ל-<a href="https://dash.cloudflare.com" target="_blank" className="text-white underline">dash.cloudflare.com</a></span>,
-        <span>ה-Account ID נמצא <b>ישירות בכתובת ה-URL</b>:</span>,
-        <div className="bg-white/20 rounded-lg px-3 py-2 font-mono text-xs break-all">
-          dash.cloudflare.com/<span className="bg-yellow-300 text-black px-1 rounded font-bold">8a2b3c4d5e6f...</span>/pages
-        </div>,
+        <span>ה-Account ID נמצא ישירות בכתובת ה-URL:</span>,
+        <div className="bg-white/20 rounded-lg px-3 py-2 font-mono text-xs break-all">dash.cloudflare.com/<span className="bg-yellow-300 text-black px-1 rounded font-bold">8a2b3c4d5e6f...</span>/pages</div>,
         <span>העתק את המחרוזת הארוכה שאחרי הלוכסן הראשון</span>,
       ]
     },
@@ -473,9 +631,9 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
       steps: [
         <span><b>Android (Chrome):</b> תפריט ⋮ ← "הוסף למסך הבית"</span>,
         <span><b>iPhone (Safari בלבד):</b> כפתור שיתוף ⬆️ ← "הוסף למסך הבית"</span>,
-        <span>לחץ <b>הוסף</b> — האפליקציה תופיע כמו אפליקציה רגילה!</span>,
+        <span>לחץ <b>הוסף</b> — מופיע כאפליקציה עצמאית!</span>,
       ],
-      note: '💡 ב-iPhone חייב להשתמש ב-Safari (לא Chrome)'
+      note: '💡 ב-iPhone חייב Safari (לא Chrome)'
     }
   };
 
@@ -488,14 +646,13 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
         </button>
       </div>
 
-      {/* Visual Guide */}
       <AnimatePresence>
         {showGuide && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="bg-card border-2 border-primary/20 rounded-[2rem] shadow-2xl overflow-hidden">
               <div className="bg-gradient-to-l from-primary to-primary/80 p-5 text-primary-foreground flex items-center gap-3">
                 <div className="p-2.5 bg-white/20 rounded-xl"><BookOpen className="w-5 h-5" /></div>
-                <div><h3 className="text-lg font-bold">מדריך שלב-אחרי-שלב</h3><p className="text-primary-foreground/80 text-sm">מיועד לכולם, גם ללא ניסיון</p></div>
+                <div><h3 className="text-lg font-bold">מדריך שלב-אחרי-שלב</h3><p className="text-primary-foreground/80 text-sm">מיועד לכולם</p></div>
               </div>
               <div className="grid grid-cols-4 border-b border-border bg-muted/20">
                 {(Object.keys(guideData) as Array<keyof typeof guideData>).map(tab => (
@@ -509,10 +666,7 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
                 <AnimatePresence mode="wait">
                   <motion.div key={guideTab} initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="space-y-4">
                     <div className={cn("rounded-2xl p-4 text-white bg-gradient-to-l", guideData[guideTab].color)}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">{guideData[guideTab].icon}</div>
-                        <h4 className="font-bold text-lg">{guideData[guideTab].label}</h4>
-                      </div>
+                      <div className="flex items-center gap-3"><div className="p-2 bg-white/20 rounded-lg">{guideData[guideTab].icon}</div><h4 className="font-bold text-lg">{guideData[guideTab].label}</h4></div>
                     </div>
                     <ol className="space-y-3">
                       {guideData[guideTab].steps.map((step, i) => (
@@ -523,14 +677,11 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
                       ))}
                     </ol>
                     {guideData[guideTab].note && (
-                      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300 font-medium">
-                        {guideData[guideTab].note}
-                      </div>
+                      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-300 font-medium">{guideData[guideTab].note}</div>
                     )}
-                    {/* Visual mock */}
                     {guideTab === 'account' && (
                       <div className="border border-border rounded-xl overflow-hidden bg-background">
-                        <div className="bg-muted px-3 py-2 text-[10px] text-muted-foreground font-mono">שורת הכתובת בדפדפן</div>
+                        <div className="bg-muted px-3 py-2 text-[10px] text-muted-foreground font-mono">שורת הכתובת</div>
                         <div className="p-4 font-mono text-xs flex flex-wrap gap-1">
                           <span className="text-muted-foreground">dash.cloudflare.com/</span>
                           <span className="bg-yellow-200 dark:bg-yellow-700 text-black dark:text-white px-2 py-0.5 rounded font-bold animate-pulse">8a2b3c4d5e6f7g8h9i0j</span>
@@ -538,7 +689,7 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
                         </div>
                       </div>
                     )}
-                    {guideTab === 'install' && !isInstalled && (
+                    {guideTab === 'install' && (
                       <div className="grid grid-cols-2 gap-3">
                         <div className="border border-border rounded-xl overflow-hidden"><div className="bg-green-500 px-3 py-2 text-white text-xs font-bold text-center">Android / Chrome</div><div className="p-3 space-y-2"><div className="flex items-center gap-2 text-xs p-2 bg-muted rounded-lg"><span>⋮</span><span>תפריט Chrome</span></div><div className="flex items-center gap-2 text-xs p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 rounded-lg font-bold"><Smartphone className="w-3.5 h-3.5 text-green-600"/><span>הוסף למסך הבית</span></div></div></div>
                         <div className="border border-border rounded-xl overflow-hidden"><div className="bg-blue-500 px-3 py-2 text-white text-xs font-bold text-center">iPhone / Safari</div><div className="p-3 space-y-2"><div className="flex items-center gap-2 text-xs p-2 bg-muted rounded-lg"><span>⬆️</span><span>כפתור שיתוף</span></div><div className="flex items-center gap-2 text-xs p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 rounded-lg font-bold"><Plus className="w-3.5 h-3.5 text-blue-600"/><span>הוסף למסך הבית</span></div></div></div>
@@ -552,9 +703,7 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
         )}
       </AnimatePresence>
 
-      {/* Form */}
       <div className="space-y-6 bg-card border border-border rounded-3xl p-6 sm:p-8">
-        {/* GitHub */}
         <div className="space-y-2">
           <label className="text-sm font-semibold flex items-center justify-between">
             <div className="flex items-center gap-2"><Github className="w-4 h-4" /><span>GitHub Personal Access Token</span></div>
@@ -571,7 +720,6 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
             {isTesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}<span>בדוק חיבור</span>
           </button>
         </div>
-        {/* Cloudflare */}
         <div className="space-y-2">
           <label className="text-sm font-semibold flex items-center justify-between">
             <div className="flex items-center gap-2"><Cloud className="w-4 h-4" /><span>Cloudflare API Token</span></div>
@@ -585,7 +733,6 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
             <button onClick={() => setLocked(l => ({ ...l, cf: !l.cf }))} className={cn("p-3 rounded-xl border border-border", locked.cf ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")}>{locked.cf ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}</button>
           </div>
         </div>
-        {/* Account ID */}
         <div className="space-y-2">
           <label className="text-sm font-semibold flex items-center justify-between">
             <span>Cloudflare Account ID</span>
@@ -610,17 +757,22 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
         </div>
       </div>
 
-      {/* Install section */}
+      {/* שיפור #4 - Install Section */}
       {isInstalled ? (
         <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-600 shrink-0"><CheckCircle2 className="w-6 h-6" /></div>
           <div><h4 className="font-bold text-green-700 dark:text-green-400">האפליקציה מותקנת ✓</h4><p className="text-sm text-muted-foreground">פועל כאפליקציה עצמאית</p></div>
         </div>
       ) : isInstallAvailable ? (
+        /* שיפור #4 - כפתור התקנה ישיר */
         <button onClick={onInstall} className="w-full bg-green-500 text-white rounded-2xl p-5 flex items-center gap-4 hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20">
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><Smartphone className="w-6 h-6" /></div>
-          <div className="flex-1 text-right"><h4 className="font-bold text-lg">התקן את האפליקציה</h4><p className="text-green-100 text-sm">הוסף למסך הבית בלחיצה אחת</p></div>
-          <Download className="w-6 h-6 opacity-80" />
+          {/* שיפור #5 - אייקון CloudUpload */}
+          <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><CloudUpload className="w-8 h-8" /></div>
+          <div className="flex-1 text-right">
+            <h4 className="font-bold text-xl">התקן את CloudDeploy</h4>
+            <p className="text-green-100 text-sm">הוסף למסך הבית — גישה מהירה בלחיצה אחת</p>
+          </div>
+          <Download className="w-7 h-7 opacity-80" />
         </button>
       ) : isIOS ? (
         <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl overflow-hidden">
@@ -693,7 +845,7 @@ function CreateProject({ settings, onSuccess }: { settings: AppSettings, onSucce
         attempts++; await new Promise(r => setTimeout(r, 6000));
         try {
           const dr = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${pName}/deployments`, { headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` } });
-          if (dr.ok) { const dd = await dr.json(); if (dd.result?.length > 0) { const l = dd.result[0]; const s = l.latest_stage?.status || l.status; if (s === 'success') { deployed = true; if (l.url) finalUrl = l.url; } else if (s === 'failure') throw new Error('הפריסה נכשלה. בדוק לוגים ב-Cloudflare.'); else setDeploymentStatus(`${s}... (${attempts}/30)`); } }
+          if (dr.ok) { const dd = await dr.json(); if (dd.result?.length > 0) { const l = dd.result[0]; const s = l.latest_stage?.status || l.status; if (s === 'success') { deployed = true; if (l.url) finalUrl = l.url; } else if (s === 'failure') throw new Error('הפריסה נכשלה.'); else setDeploymentStatus(`${s}... (${attempts}/30)`); } }
         } catch (e: any) { if (e.message.includes('נכשלה')) throw e; }
       }
       onSuccess({ id: Date.now().toString(), name, githubRepo: `${username}/${name}`, cloudflareProject: pName, lastDeployment: new Date().toISOString(), status: 'success', productionUrl: finalUrl, productionBranch: defaultBranch });
@@ -726,7 +878,7 @@ function CreateProject({ settings, onSuccess }: { settings: AppSettings, onSucce
             <div className="flex items-center justify-between text-sm font-medium"><span>{steps[step]}</span><span>{Math.round(((step + 1) / steps.length) * 100)}%</span></div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden"><motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
             {deploymentStatus && <p className="text-[10px] text-center text-primary font-mono">{deploymentStatus}</p>}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse"><Loader2 className="w-3 h-3 animate-spin" /><span>אנא המתן, עשוי לקחת מספר דקות...</span></div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse"><Loader2 className="w-3 h-3 animate-spin" /><span>אנא המתן...</span></div>
           </div>
         ) : (
           <button onClick={deploy} className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20">התחל פריסה</button>
@@ -736,8 +888,13 @@ function CreateProject({ settings, onSuccess }: { settings: AppSettings, onSucce
   );
 }
 
-// --- ProjectDetail ---
-function ProjectDetail({ project, settings, onUpdate }: { project: Project, settings: AppSettings, onUpdate: (p: Project) => void }) {
+// ============================================================
+// --- ProjectDetail (שיפור #2 - הערת גרסה + שיפור #3 + #6) ---
+// ============================================================
+function ProjectDetail({ project, settings, onUpdate, onDeleteProject }: {
+  project: Project, settings: AppSettings,
+  onUpdate: (p: Project) => void, onDeleteProject: (p: Project) => void
+}) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateFile, setUpdateFile] = useState<File | null>(null);
   const [updateStep, setUpdateStep] = useState('');
@@ -747,6 +904,8 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
   const [deployments, setDeployments] = useState<Deployment[]>(project.deployments || []);
   const [isLoadingDeployments, setIsLoadingDeployments] = useState(false);
   const [activeTab, setActiveTab] = useState<'update' | 'history'>('update');
+  // שיפור #2 - הערת גרסה
+  const [releaseNote, setReleaseNote] = useState('');
 
   useEffect(() => {
     if (project.previewUrl) setPreviewUrl(project.previewUrl);
@@ -775,7 +934,6 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
           })).reverse();
           setDeployments(deps);
           onUpdate({ ...project, deployments: deps });
-          // Auto-refresh if any deployment is progressing
           const hasProgressing = deps.some(d => d.status === 'progressing' || d.status === 'active' || d.status === 'queued');
           if (hasProgressing) setTimeout(fetchDeployments, 10000);
         }
@@ -786,21 +944,19 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
   const promoteToProduction = async (dep: Deployment) => {
     const isPreview = dep.environment === 'preview';
     const targetBranch = project.productionBranch || 'main';
-
     if (!confirm(`להפוך פריסה זו לגרסת הייצור?`)) return;
     setIsUpdating(true); setUpdateStep(isPreview ? 'ממזג ל-main...' : 'מבצע rollback...');
     try {
       if (!isPreview) {
-        // Production rollback via Cloudflare
         const r = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${project.cloudflareProject}/deployments/${dep.id}/rollback`, { method: 'POST', headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}`, 'Content-Type': 'application/json' } });
         if (!r.ok) { const e = await r.json(); throw new Error(e.errors?.[0]?.message || 'נכשל'); }
-        alert('✅ Rollback בוצע! גרסה זו פעילה בייצור.');
+        alert('✅ Rollback בוצע!');
       } else {
         if (!dep.branch) throw new Error('לא ניתן לזהות את ה-branch');
         if (!settings.githubToken) throw new Error('חסר GitHub Token');
         const r = await fetch(`/api/github/repos/${project.githubRepo}/merges`, { method: 'POST', headers: { Authorization: `token ${settings.githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ base: targetBranch, head: dep.branch, commit_message: `Promote ${dep.branch} to production` }) });
-        if (!r.ok && r.status !== 204) { const e = await r.json(); throw new Error(e.message || `שגיאת GitHub: ${r.status}`); }
-        alert(`✅ מוזג ל-${targetBranch}! Cloudflare יפרוס אוטומטית.`);
+        if (!r.ok && r.status !== 204) { const e = await r.json(); throw new Error(e.message || `שגיאת GitHub`); }
+        alert(`✅ מוזג ל-${targetBranch}!`);
       }
       fetchDeployments();
       onUpdate({ ...project, lastDeployment: new Date().toISOString(), status: 'success' });
@@ -830,7 +986,11 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
       const rr = await fetch(`/api/github/repos/${project.githubRepo}/git/refs`, { method: 'POST', headers: { Authorization: `token ${settings.githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: `refs/heads/${branchName}`, sha: bd.commit.sha }) });
       if (!rr.ok) throw new Error(`נכשל ביצירת ענף: ${(await rr.json()).message}`);
       setUpdateStep('מעלה קבצים...');
-      await uploadFilesToGithub(filesToUpload, project.githubRepo, branchName, settings.githubToken, `Update ${branchName}`);
+      // שיפור #2 - הערת גרסה נשלחת כ-commit message
+      const commitMsg = releaseNote.trim()
+        ? `Update ${branchName}: ${releaseNote.trim()}`
+        : `Update ${branchName}`;
+      await uploadFilesToGithub(filesToUpload, project.githubRepo, branchName, settings.githubToken, commitMsg);
       setUpdateStep('ממתין לפריסה...');
       let deployed = false, attempts = 0, finalPreviewUrl = `https://${branchName}.${project.cloudflareProject}.pages.dev`;
       while (!deployed && attempts < 30) {
@@ -841,6 +1001,7 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
         } catch (e: any) { if (e.message.includes('נכשלה')) throw e; }
       }
       setPreviewUrl(finalPreviewUrl);
+      setReleaseNote('');
       onUpdate({ ...project, previewUrl: finalPreviewUrl, previewBranch: branchName, lastDeployment: new Date().toISOString(), productionBranch });
       await fetchDeployments();
     } catch (e: any) { alert(`עדכון נכשל: ${e.message}`); } finally { setIsUpdating(false); setUpdateStep(''); }
@@ -848,7 +1009,7 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
 
   const mergeToMain = async () => {
     const b = newBranch || project.previewBranch;
-    if (!b) { alert('לא נמצא ענף למיזוג.'); return; }
+    if (!b) { alert('לא נמצא ענף.'); return; }
     const tb = project.productionBranch || 'main';
     try {
       setUpdateStep(`ממזג ל-${tb}...`);
@@ -875,9 +1036,11 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
           <h2 className="text-3xl font-bold tracking-tight">{project.name}</h2>
           <div className="flex items-center gap-2 mt-1"><Github className="w-4 h-4 text-muted-foreground" /><span className="text-sm text-muted-foreground font-mono">{project.githubRepo}</span></div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 flex-wrap">
           {project.productionUrl && <a href={project.productionUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl text-sm font-semibold transition-colors"><Globe className="w-4 h-4" /><span>צפה באתר</span></a>}
           <a href={`https://dash.cloudflare.com/${settings.cloudflareAccountId}/pages/view/${project.cloudflareProject}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-sm font-semibold transition-colors"><Cloud className="w-4 h-4" /><span>Cloudflare</span></a>
+          {/* שיפור #3 - כפתור מחיקה בפרויקט */}
+          <button onClick={() => onDeleteProject(project)} className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl text-sm font-semibold transition-colors"><Trash2 className="w-4 h-4" /><span>מחק פרויקט</span></button>
         </div>
       </div>
 
@@ -903,8 +1066,28 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                       <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" /><p className="text-sm font-medium">{updateFile ? updateFile.name : 'בחר קובץ ZIP'}</p>
                     </div>
                   </div>
-                  <button onClick={handleUpdate} disabled={!updateFile || isUpdating} className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold hover:opacity-90 disabled:opacity-50">
-                    {isUpdating ? <div className="flex flex-col items-center gap-1"><div className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /><span>{updateStep}</span></div>{deploymentStatus && <p className="text-[10px] opacity-70">{deploymentStatus}</p>}</div> : 'העלה עדכון'}
+
+                  {/* שיפור #2 - שדה הערת גרסה */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4 text-muted-foreground" /><span>הערת גרסה (אופציונלי)</span></label>
+                    <textarea
+                      value={releaseNote}
+                      onChange={e => setReleaseNote(e.target.value)}
+                      disabled={isUpdating}
+                      rows={2}
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none"
+                      placeholder="תאר מה השתנה בגרסה זו... (יישמר כ-commit message)"
+                    />
+                  </div>
+
+                  {/* שיפור #6 - Loading state בכפתור */}
+                  <button onClick={handleUpdate} disabled={!updateFile || isUpdating} className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50">
+                    {isUpdating ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /><span>{updateStep}</span></div>
+                        {deploymentStatus && <p className="text-[10px] opacity-70">{deploymentStatus}</p>}
+                      </div>
+                    ) : 'העלה עדכון'}
                   </button>
                 </div>
               </div>
@@ -914,7 +1097,7 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                     <h3 className="text-xl font-bold text-primary flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /><span>תצוגה מקדימה מוכנה!</span></h3>
                     <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span>פתח</span><ExternalLink className="w-4 h-4" /></a>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">הגרסה נפרסה. בדוק לפני מיזוג לייצור.</p>
+                  <p className="text-sm text-muted-foreground mb-4">בדוק את הגרסה לפני מיזוג לייצור.</p>
                   <button onClick={mergeToMain} disabled={!!updateStep} className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50">
                     {updateStep?.includes('ממזג') ? <Loader2 className="w-5 h-5 animate-spin" /> : <GitMerge className="w-5 h-5" />}
                     <span>{updateStep?.includes('ממזג') ? updateStep : 'מזג ל-Main (ייצור)'}</span>
@@ -932,7 +1115,7 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                   {deployments.length > 0 && <div className="flex justify-between"><span className="text-muted-foreground">פריסות:</span><span>{deployments.length}</span></div>}
                 </div>
               </div>
-              <div className="bg-muted/50 border border-border rounded-3xl p-6"><h4 className="font-bold mb-2">צריך עזרה?</h4><p className="text-sm text-muted-foreground">וודא ש-ZIP מכיל index.html בשורש וש-API keys תקינים.</p></div>
+              <div className="bg-muted/50 border border-border rounded-3xl p-6"><h4 className="font-bold mb-2">טיפ: הרשאות GitHub</h4><p className="text-sm text-muted-foreground">לצורך מחיקת פרויקטים, וודא שה-Token שלך כולל הרשאת <b>delete_repo</b>.</p></div>
             </div>
           </motion.div>
         )}
@@ -940,8 +1123,10 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
           <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold flex items-center gap-2"><History className="w-5 h-5 text-primary" />היסטוריית פריסות</h3>
+              {/* שיפור #6 - Loading state */}
               <button onClick={fetchDeployments} disabled={isLoadingDeployments} className="flex items-center gap-2 text-sm text-primary hover:underline disabled:opacity-50">
-                {isLoadingDeployments ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}<span>רענן</span>
+                {isLoadingDeployments ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                <span>{isLoadingDeployments ? 'טוען...' : 'רענן'}</span>
               </button>
             </div>
             {isLoadingDeployments && !deployments.length ? (
@@ -956,9 +1141,8 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                   const isMain = dep.branch === 'main' || dep.branch === 'master';
                   return (
                     <motion.div key={dep.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                      className={cn("rounded-3xl border overflow-hidden transition-all", isProduction ? "border-primary/30 bg-primary/5 ring-1 ring-primary/10" : "bg-card border-border")}>
+                      className={cn("rounded-3xl border overflow-hidden", isProduction ? "border-primary/30 bg-primary/5 ring-1 ring-primary/10" : "bg-card border-border")}>
                       <div className="p-5">
-                        {/* Row 1: version + status + env + link */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-muted text-muted-foreground border border-border">גרסה #{dep.versionNumber}</span>
@@ -966,15 +1150,10 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                               {dep.status === 'progressing' ? <Loader2 className="w-3 h-3 animate-spin" /> : <div className={cn("w-1.5 h-1.5 rounded-full", si.dot)} />}
                               {si.label}
                             </span>
-                            {isProduction ? (
-                              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-yellow-500/10 text-yellow-600 flex items-center gap-1"><Star className="w-3 h-3 fill-current" />ייצור</span>
-                            ) : (
-                              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">תצוגה מקדימה</span>
-                            )}
+                            {isProduction ? <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-yellow-500/10 text-yellow-600 flex items-center gap-1"><Star className="w-3 h-3 fill-current" />ייצור</span> : <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">תצוגה מקדימה</span>}
                           </div>
                           {dep.url && <a href={dep.url} target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-primary transition-colors"><ExternalLink className="w-4 h-4" /></a>}
                         </div>
-                        {/* Row 2: branch + commit */}
                         {dep.branch && (
                           <div className="flex items-center gap-2 mb-2">
                             <GitBranch className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -988,11 +1167,10 @@ function ProjectDetail({ project, settings, onUpdate }: { project: Project, sett
                           </div>
                         )}
                         <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-4"><Clock className="w-3.5 h-3.5" />{formatDate(dep.created_on)}</p>
-                        {/* Promote button */}
                         {dep.status === 'success' && !isProduction && (
                           <button onClick={() => promoteToProduction(dep)} disabled={isUpdating} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-border hover:border-primary hover:bg-primary/5 rounded-2xl text-sm font-bold transition-all disabled:opacity-50">
                             {isUpdating && updateStep ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitMerge className="w-4 h-4 text-muted-foreground" />}
-                            <span>{isUpdating && updateStep ? updateStep : (dep.branch === 'main' || dep.branch === 'master' ? 'שחזר גרסה זו (Rollback)' : `מזג ל-${project.productionBranch || 'main'}`)}</span>
+                            <span>{isUpdating && updateStep ? updateStep : (isMain ? 'שחזר גרסה זו (Rollback)' : `מזג ל-${project.productionBranch || 'main'}`)}</span>
                           </button>
                         )}
                       </div>
