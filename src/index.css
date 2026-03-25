@@ -1,197 +1,46 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-accent: var(--accent);
 }
 
 :root {
-  --accent: #2563eb;
-  --accent-glow: rgba(37, 99, 235, 0.2);
-  --bg-main: #050505;
-  --bg-card: #121212;
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --border-glass: rgba(255, 255, 255, 0.08);
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+  --border: #334155;
 }
 
 body {
-  @apply bg-[#050505] text-zinc-100 antialiased selection:bg-blue-500/30;
-  direction: rtl;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+[dir="rtl"] {
+  text-align: right;
 }
 
 .glass {
-  @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08];
+  background: rgba(var(--card), 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
 }
-
-.glass-darker {
-  @apply bg-black/40 backdrop-blur-2xl border border-white/[0.05];
-}
-
-.accent-bg {
-  background-color: var(--accent);
-}
-
-.accent-text {
-  color: var(--accent);
-}
-
-.accent-border {
-  border-color: var(--accent);
-}
-
-.accent-ring:focus {
-  --tw-ring-color: var(--accent-glow);
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-.accent-shadow {
-  box-shadow: 0 20px 40px -10px var(--accent-glow);
-}
-
-.light-mode {
-  --bg: #f8fafc;
-  --ink: #0f172a;
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --bg-glass: rgba(255, 255, 255, 0.4);
-  --border-glass: rgba(0, 0, 0, 0.05);
-  color: var(--ink);
-}
-
-.light-mode .glass {
-  @apply bg-white/40 backdrop-blur-2xl border border-black/[0.05] shadow-sm;
-}
-
-.light-mode .glass-darker {
-  @apply bg-white/60 backdrop-blur-2xl border border-black/[0.05] shadow-md;
-}
-
-.light-mode .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-br from-slate-900 to-slate-600;
-}
-
-.light-mode input, .light-mode select {
-  @apply bg-white/80 border-black/10 text-slate-900 placeholder:text-slate-400;
-}
-
-.light-mode .bg-white\/5 {
-  @apply bg-black/[0.04];
-}
-
-.light-mode .border-white\/5, .light-mode .border-white\/10 {
-  @apply border-black/[0.08];
-}
-
-.light-mode .text-zinc-400, .light-mode .text-zinc-500 {
-  @apply text-slate-600 font-medium;
-}
-
-.light-mode .text-zinc-300 {
-  @apply text-slate-700;
-}
-
-.light-mode .hover\:text-zinc-300:hover {
-  @apply text-slate-900;
-}
-
-.light-mode input, .light-mode select, .light-mode textarea {
-  @apply text-slate-900 placeholder:text-slate-400;
-}
-
-.light-mode .bg-white\/5 {
-  @apply bg-slate-100/50;
-}
-
-.light-mode .border-white\/5 {
-  @apply border-slate-200;
-}
-
-.light-mode .text-zinc-600 {
-  @apply text-slate-500;
-}
-
-.light-mode .bg-zinc-900\/50 {
-  @apply bg-slate-200/50;
-}
-
-.light-mode .bg-zinc-800 {
-  @apply bg-slate-300;
-}
-
-.light-mode .border-zinc-800, .light-mode .border-zinc-700 {
-  @apply border-slate-300;
-}
-
-.light-mode .accent-bg {
-  @apply shadow-lg shadow-accent/30;
-}
-
-.text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-br from-white to-white/60;
-}
-
-input[type="file"]::file-selector-button {
-  display: none;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
-}
-
-/* ── Light mode: toggle rows ── */
-.light-mode .bg-blue-500\/10 { background-color: rgba(37,99,235,0.08) !important; }
-.light-mode .bg-orange-500\/10 { background-color: rgba(249,115,22,0.08) !important; }
-.light-mode .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.08) !important; }
-.light-mode .bg-violet-500\/10 { background-color: rgba(139,92,246,0.08) !important; }
-.light-mode .border-blue-500\/30 { border-color: rgba(37,99,235,0.25) !important; }
-.light-mode .border-orange-500\/25, .light-mode .border-orange-500\/30 { border-color: rgba(249,115,22,0.25) !important; }
-.light-mode .border-emerald-500\/25, .light-mode .border-emerald-500\/30 { border-color: rgba(16,185,129,0.25) !important; }
-.light-mode .border-violet-500\/30 { border-color: rgba(139,92,246,0.25) !important; }
-
-/* ── Light mode: toggle pill bg ── */
-.light-mode .bg-white\/10 { background-color: rgba(0,0,0,0.1) !important; }
-
-/* ── Light mode: section label text ── */
-.light-mode .text-zinc-500 { color: #64748b !important; }
-.light-mode .text-zinc-600 { color: #475569 !important; }
-
-/* ── Light mode: settings modal bg ── */
-.light-mode .fixed .glass {
-  background-color: rgba(255,255,255,0.92) !important;
-  border-color: rgba(0,0,0,0.08) !important;
-}
-
-/* ── Light mode: token badge text ── */
-.light-mode .text-emerald-300 { color: #059669 !important; }
-.light-mode .text-orange-300 { color: #c2410c !important; }
-.light-mode .text-blue-400 { color: #1d4ed8 !important; }
-.light-mode .text-orange-400 { color: #ea580c !important; }
-.light-mode .text-emerald-400 { color: #059669 !important; }
-.light-mode .text-violet-300 { color: #7c3aed !important; }
-
-/* ── Light mode: framework preset buttons ── */
-.light-mode .bg-white\/5 button, .light-mode button.bg-white\/5 {
-  background-color: rgba(0,0,0,0.04) !important;
-  color: #334155 !important;
-}
-
-/* ── Light mode: handle bar ── */
-.light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.12) !important; }
-
-/* ── Light mode: detection badge ── */
-.light-mode .bg-violet-500\/10 { background-color: rgba(139,92,246,0.08) !important; }
-.light-mode .text-violet-300 { color: #6d28d9 !important; }
-.light-mode .bg-emerald-500\/10 { background-color: rgba(16,185,129,0.08) !important; }
-.light-mode .text-emerald-300 { color: #047857 !important; }
-
