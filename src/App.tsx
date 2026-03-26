@@ -319,9 +319,9 @@ const HELP_STEPS = [
     subtitle: 'אוטומציה מלאה של פריסה לענן',
     content: (
       <div className="space-y-4">
-        <div className="bg-violet-50 dark:bg-violet-950 border-2 border-violet-200 dark:border-violet-700 rounded-2xl p-4 text-sm leading-relaxed shadow-sm">
-          <p className="font-bold text-violet-900 dark:text-violet-200 text-base mb-2">💡 הרעיון בקצרה</p>
-          <p className="text-gray-900 dark:text-gray-200">CloudDeploy מחבר בין <b>GitHub</b> ל-<b>Cloudflare Pages</b> — ומאפשר לך לפרוס, לנהל ולמחוק פרויקטים מהנייד, ללא צורך בשורת פקודה.</p>
+        <div className="bg-gradient-to-l from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 text-sm leading-relaxed">
+          <p className="font-bold text-violet-800 dark:text-violet-300 text-base mb-2">💡 הרעיון בקצרה</p>
+          <p className="text-gray-700 dark:text-gray-300">CloudDeploy מחבר בין <b>GitHub</b> ל-<b>Cloudflare Pages</b> — ומאפשר לך לפרוס, לנהל ולמחוק פרויקטים מהנייד, ללא צורך בשורת פקודה.</p>
         </div>
         <div className="grid grid-cols-1 gap-3">
           {[
@@ -330,13 +330,13 @@ const HELP_STEPS = [
             { icon: '🔄', title: 'סנכרון אוטומטי', desc: 'כל push ל-GitHub מפרוס אוטומטית את האתר שלך' },
             { icon: '🗑️', title: 'מחיקה בטוחה', desc: 'מחיקה כפולה עם אישור — מגנה מפני טעויות' },
           ].map(item => (
-            <div key={item.title} className="flex items-start gap-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 shadow-sm">
+            <div key={item.title} className="flex items-start gap-3 bg-card border border-border rounded-xl p-3">
               <span className="text-2xl shrink-0">{item.icon}</span>
-              <div><p className="font-bold text-sm text-gray-900 dark:text-gray-100">{item.title}</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{item.desc}</p></div>
+              <div><p className="font-bold text-sm">{item.title}</p><p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p></div>
             </div>
           ))}
         </div>
-        <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-3 text-xs text-blue-900 dark:text-blue-200 font-medium">
+        <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
           <b>🔁 הזרימה הבסיסית:</b> הגדרות (API Keys) ← ייבוא מאגר ← הפרויקט חי ← שינויים עוברים אוטומטית
         </div>
       </div>
@@ -369,11 +369,11 @@ const HELP_STEPS = [
               <span key="copy"><b>Generate token</b> ← <span className="text-red-600 font-bold">העתק מיד!</span> (לא יוצג שוב)</span>,
             ].map((step, i) => (
               <div key={i} className="flex gap-2.5 items-start text-sm">
-                <span className="w-5 h-5 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                <span className="w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
                 <div className="leading-relaxed">{step}</div>
               </div>
             ))}
-            <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-600 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200 mt-2 font-medium">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-300 mt-2">
               ⚠️ ללא <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">delete_repo</code> מחיקת פרויקטים לא תעבוד
             </div>
           </div>
@@ -391,7 +391,7 @@ const HELP_STEPS = [
               'שם: "CloudDeploy"',
               <div key="perms" className="space-y-1">
                 <span>הוסף הרשאות:</span>
-                <div className="bg-orange-50 dark:bg-orange-950 border border-orange-300 dark:border-orange-700 rounded-lg px-3 py-2 font-mono text-xs space-y-1 mt-1 text-gray-900 dark:text-gray-100">
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg px-3 py-2 font-mono text-xs space-y-1 mt-1">
                   <div>Account → <b>Cloudflare Pages</b> → Edit</div>
                   <div>Account → <b>Account Settings</b> → Read</div>
                 </div>
@@ -413,7 +413,7 @@ const HELP_STEPS = [
           </div>
           <div className="p-4 space-y-3 text-sm">
             <p>ה-Account ID נמצא ב-URL של Cloudflare:</p>
-            <div className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed text-gray-900 dark:text-gray-100">
+            <div className="bg-muted rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed">
               dash.cloudflare.com/<span className="bg-yellow-200 dark:bg-yellow-700/60 text-black dark:text-yellow-200 px-1.5 py-0.5 rounded font-bold animate-pulse">8a2b3c4d5e6f7g8h</span>/pages
             </div>
             <p className="text-muted-foreground text-xs">העתק את המחרוזת הארוכה שבין הלוכסנים</p>
@@ -562,21 +562,21 @@ const HELP_STEPS = [
         {/* Flow */}
         <div className="space-y-3">
           {[
-            { step: 1, color: 'bg-orange-100 dark:bg-orange-950 border-orange-300 dark:border-orange-600', icon: <Trash2 className="w-4 h-4 text-orange-600" />, title: 'לחיצה על סמל המחיקה', desc: 'נפתח חלון אישור עם פרטי הפרויקט' },
-            { step: 2, color: 'bg-orange-100 dark:bg-orange-950 border-orange-300 dark:border-orange-600', icon: <Cloud className="w-4 h-4 text-orange-600" />, title: 'אישור ראשון — Cloudflare', desc: 'לחץ "אשר מחיקת Cloudflare" לאישור מחיקת הדף מ-Cloudflare Pages' },
-            { step: 3, color: 'bg-red-100 dark:bg-red-950 border-red-300 dark:border-red-600', icon: <Github className="w-4 h-4 text-red-600" />, title: 'אישור שני — GitHub', desc: 'לחץ "אשר מחיקת GitHub" לאישור מחיקת המאגר מ-GitHub' },
-            { step: 4, color: 'bg-green-100 dark:bg-green-950 border-green-300 dark:border-green-600', icon: <Check className="w-4 h-4 text-green-600" />, title: 'מחיקה מתבצעת', desc: 'CloudDeploy מוחק משני השירותים ומסיר מלוח הבקרה' },
+            { step: 1, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Trash2 className="w-4 h-4 text-orange-600" />, title: 'לחיצה על סמל המחיקה', desc: 'נפתח חלון אישור עם פרטי הפרויקט' },
+            { step: 2, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Cloud className="w-4 h-4 text-orange-600" />, title: 'אישור ראשון — Cloudflare', desc: 'לחץ "אשר מחיקת Cloudflare" לאישור מחיקת הדף מ-Cloudflare Pages' },
+            { step: 3, color: 'bg-red-100 dark:bg-red-950/40 border-red-300 dark:border-red-700', icon: <Github className="w-4 h-4 text-red-600" />, title: 'אישור שני — GitHub', desc: 'לחץ "אשר מחיקת GitHub" לאישור מחיקת המאגר מ-GitHub' },
+            { step: 4, color: 'bg-green-100 dark:bg-green-950/40 border-green-300 dark:border-green-700', icon: <Check className="w-4 h-4 text-green-600" />, title: 'מחיקה מתבצעת', desc: 'CloudDeploy מוחק משני השירותים ומסיר מלוח הבקרה' },
           ].map(item => (
             <div key={item.step} className={`border-2 rounded-xl p-3 flex gap-3 items-start ${item.color}`}>
-              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-sm">{item.icon}</div>
+              <div className="w-8 h-8 rounded-xl bg-white/60 dark:bg-black/20 flex items-center justify-center shrink-0">{item.icon}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">{item.title}</p>
-                <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mt-0.5">{item.desc}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-3 text-xs text-blue-900 dark:text-blue-200 font-medium">
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
           💡 ניתן לבטל בכל שלב עם כפתור "ביטול" — הפרויקט לא ייפגע
         </div>
       </div>
@@ -592,9 +592,9 @@ const HELP_STEPS = [
     subtitle: 'גישה מיידית ממסך הבית — ללא App Store',
     content: (
       <div className="space-y-4">
-        <div className="bg-green-50 dark:bg-green-950 border-2 border-green-200 dark:border-green-700 rounded-2xl p-4 text-sm">
-          <p className="font-bold text-green-800 dark:text-green-400 mb-1">✅ יתרונות ה-PWA</p>
-          <ul className="space-y-1 text-xs text-gray-800 dark:text-gray-200">
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-sm">
+          <p className="font-bold text-green-700 dark:text-green-400 mb-1">✅ יתרונות ה-PWA</p>
+          <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
             <li>• נפתח כאפליקציה מלאה ללא שורת הכתובת</li>
             <li>• עובד גם במצב לא מקוון (Offline)</li>
             <li>• מתעדכן אוטומטית בכל פתיחה</li>
@@ -619,7 +619,7 @@ const HELP_STEPS = [
                   <span>{item.text}</span>
                 </div>
               ))}
-              <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-700 rounded-xl p-2.5 text-xs text-green-800 dark:text-green-200 mt-1">
+              <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-2.5 text-xs text-green-800 dark:text-green-300 mt-1">
                 💡 Chrome עשוי להציג באנר "התקן" אוטומטית בתחתית המסך
               </div>
             </div>
@@ -641,7 +641,7 @@ const HELP_STEPS = [
                   <span>{item.text}</span>
                 </div>
               ))}
-              <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-600 rounded-xl p-2.5 text-xs text-amber-900 dark:text-amber-200 mt-1">
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-2.5 text-xs text-amber-800 dark:text-amber-300 mt-1">
                 ⚠️ ב-iPhone, ב-Chrome אין אפשרות להתקין — חייב להשתמש ב-Safari
               </div>
             </div>
@@ -686,9 +686,9 @@ const HELP_STEPS = [
             desc: 'כמות הפריסות בכרטיס מציגה כמה פעמים הפרויקט עודכן. גדול = פרויקט פעיל ובריא.',
           },
         ].map(tip => (
-          <div key={tip.title} className="flex gap-3 items-start bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 shadow-sm">
+          <div key={tip.title} className="flex gap-3 items-start bg-card border border-border rounded-xl p-3">
             <span className="text-xl shrink-0 mt-0.5">{tip.icon}</span>
-            <div><p className="font-bold text-sm text-gray-900 dark:text-gray-100">{tip.title}</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-0.5">{tip.desc}</p></div>
+            <div><p className="font-bold text-sm">{tip.title}</p><p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{tip.desc}</p></div>
           </div>
         ))}
       </div>
@@ -704,14 +704,14 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300]"
+        className="fixed inset-0 bg-black/85 backdrop-blur-md z-[300]"
       />
       <motion.div
         initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
         className="fixed inset-0 z-[301] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-slate-200 dark:border-zinc-700" style={{maxHeight: '92vh'}}>
+        <div className="w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col overflow-hidden bg-white dark:bg-zinc-900" style={{maxHeight: '92vh'}}>
 
           {/* Header */}
           <div className="bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0">
@@ -728,7 +728,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Step tabs — horizontal scroll */}
-          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-border bg-zinc-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
             {HELP_STEPS.map((step, i) => (
               <button
                 key={step.id}
@@ -737,7 +737,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
                   "flex flex-col items-center gap-1 px-3 py-2.5 text-[10px] font-bold shrink-0 border-b-2 transition-all min-w-[64px]",
                   activeStep === i
                     ? "border-primary text-primary bg-background"
-                    : "border-transparent text-gray-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/60"
+                    : "border-transparent text-muted-foreground hover:bg-muted/60"
                 )}
               >
                 <span className={cn(
@@ -759,7 +759,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto flex-1 p-5 bg-slate-50 dark:bg-zinc-900" dir="rtl">
+          <div className="overflow-y-auto flex-1 p-5 bg-white dark:bg-zinc-900 help-modal-body" dir="rtl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeStep}
@@ -783,7 +783,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Footer navigation */}
-          <div className="flex gap-3 p-4 border-t border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shrink-0">
+          <div className="flex gap-3 p-4 border-t border-border bg-zinc-50 dark:bg-zinc-800 shrink-0">
             <button
               onClick={() => setActiveStep(p => Math.max(0, p - 1))}
               disabled={activeStep === 0}
