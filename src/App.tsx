@@ -16,7 +16,7 @@ import JSZip from 'jszip';
 import { cn } from './lib/utils';
 
 // --- Types ---
-type View = 'dashboard' | 'create' | 'settings' | 'project-detail';
+type View = 'dashboard' | 'create' | 'settings' | 'project-detail' | 'github-import';
 
 interface Deployment {
   id: string;
@@ -172,7 +172,11 @@ function DeleteConfirmModal({ project, settings, onConfirm, onCancel }: {
         setDeleteStatus('מוחק מאגר GitHub...');
         const ghRes = await fetch(`/api/github/repos/${project.githubRepo}`, {
           method: 'DELETE',
-          headers: { Authorization: `token ${settings.githubToken}` }
+          headers: {
+            Authorization: `token ${settings.githubToken}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          }
         });
         if (!ghRes.ok && ghRes.status !== 404) {
           const d = await ghRes.json();
@@ -192,18 +196,18 @@ function DeleteConfirmModal({ project, settings, onConfirm, onCancel }: {
 
   return (
     <>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={!isDeleting ? onCancel : undefined} className="fixed inset-0 bg-black/60 z-[200] backdrop-blur-sm" />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={!isDeleting ? onCancel : undefined} className="fixed inset-0 bg-black/80 z-[200]" />
       <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed inset-0 z-[201] flex items-center justify-center p-4">
-        <div className="bg-background border border-border rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-5" dir="rtl">
+        <div className="bg-white dark:bg-zinc-900 border-2 border-red-200 dark:border-red-900 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.4)] p-6 max-w-sm w-full space-y-5" dir="rtl">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center shrink-0"><Trash2 className="w-6 h-6 text-red-600" /></div>
             <div><h3 className="text-lg font-bold">מחיקת פרויקט</h3><p className="text-sm text-muted-foreground">{project.name}</p></div>
           </div>
 
-          <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 space-y-2 text-sm">
-            <p className="font-semibold text-red-700 dark:text-red-400">פעולה זו תמחק לצמיתות:</p>
-            <div className="flex items-center gap-2 text-muted-foreground"><Github className="w-4 h-4 shrink-0" /><span>מאגר GitHub: <b>{project.githubRepo}</b></span></div>
-            <div className="flex items-center gap-2 text-muted-foreground"><Cloud className="w-4 h-4 shrink-0" /><span>פרויקט Cloudflare: <b>{project.cloudflareProject}</b></span></div>
+          <div className="bg-red-50 dark:bg-red-950 border-2 border-red-300 dark:border-red-700 rounded-2xl p-4 space-y-2 text-sm">
+            <p className="font-bold text-red-700 dark:text-red-400 text-base">⚠️ פעולה זו תמחק לצמיתות!</p>
+            <div className="flex items-center gap-2 text-gray-800 dark:text-gray-200"><Github className="w-4 h-4 shrink-0 text-red-500" /><span>מאגר GitHub: <b className="text-red-700 dark:text-red-400">{project.githubRepo}</b></span></div>
+            <div className="flex items-center gap-2 text-gray-800 dark:text-gray-200"><Cloud className="w-4 h-4 shrink-0 text-red-500" /><span>פרויקט Cloudflare: <b className="text-red-700 dark:text-red-400">{project.cloudflareProject}</b></span></div>
           </div>
 
           {isDeleting && (
@@ -321,10 +325,11 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         <AnimatePresence mode="wait">
-          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(p) => setProjectToDelete(p)} settings={settings} onSync={setProjects} />}
+          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(p) => setProjectToDelete(p)} settings={settings} onSync={setProjects} onGithubImport={() => navigateTo('github-import')} />}
           {view === 'create' && <CreateProject settings={settings} onSuccess={(p) => { setProjects(prev => [p, ...prev]); navigateTo('dashboard'); }} />}
           {view === 'settings' && <Settings settings={settings} onSave={setSettings} onInstall={handleInstall} isInstallAvailable={!!deferredPrompt && !isInstalled} isInstalled={isInstalled} />}
           {view === 'project-detail' && selectedProject && <ProjectDetail project={selectedProject} settings={settings} onUpdate={(u) => { setProjects(prev => prev.map(p => p.id === u.id ? u : p)); setSelectedProject(u); }} onDeleteProject={(p) => setProjectToDelete(p)} />}
+          {view === 'github-import' && <GithubImport settings={settings} projects={projects} onImported={(p) => { setProjects(prev => { const exists = prev.find(x => x.id === p.id); return exists ? prev.map(x => x.id === p.id ? p : x) : [p, ...prev]; }); }} />}}
         </AnimatePresence>
       </main>
 
@@ -377,9 +382,10 @@ export default function App() {
 // =================================================================
 // --- Dashboard (שיפור #1 - Pagination + שיפור #3 + שיפור #6) ---
 // =================================================================
-function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, settings, onSync }: {
+function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, settings, onSync, onGithubImport }: {
   projects: Project[], onNewProject: () => void, onSelectProject: (p: Project) => void,
-  onDeleteProject: (p: Project) => void, settings: AppSettings, onSync: (p: Project[]) => void
+  onDeleteProject: (p: Project) => void, settings: AppSettings, onSync: (p: Project[]) => void,
+  onGithubImport: () => void
 }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -472,6 +478,9 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
           <button onClick={() => loadPage(1, false)} disabled={isSyncing || isLoadingMore} className="inline-flex items-center gap-2 bg-muted px-4 py-3 rounded-xl font-semibold hover:bg-muted/80 transition-all disabled:opacity-70">
             {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
             <span>{isSyncing ? 'טוען...' : 'סנכרן מ-Cloudflare'}</span>
+          </button>
+          <button onClick={onGithubImport} className="inline-flex items-center gap-2 bg-zinc-800 dark:bg-zinc-700 text-white px-4 py-3 rounded-xl font-semibold hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-all">
+            <Github className="w-5 h-5" /><span>ייבוא מ-GitHub</span>
           </button>
           <button onClick={onNewProject} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
             <Plus className="w-5 h-5" /><span>פרויקט חדש</span>
@@ -775,24 +784,23 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
           <Download className="w-7 h-7 opacity-80" />
         </button>
       ) : isIOS ? (
-        <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl overflow-hidden">
-          <button onClick={() => setShowIOSGuide(!showIOSGuide)} className="w-full p-5 flex items-center gap-4 hover:bg-blue-500/10 transition-colors">
+        <div className="bg-blue-500/5 border-2 border-blue-500/20 rounded-2xl overflow-hidden">
+          <div className="p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0"><Smartphone className="w-6 h-6" /></div>
-            <div className="flex-1 text-right"><h4 className="font-bold text-blue-700 dark:text-blue-400">התקן על iPhone/iPad</h4><p className="text-sm text-muted-foreground">לחץ לראות הוראות</p></div>
-            <ChevronRight className={cn("w-5 h-5 text-muted-foreground transition-transform", showIOSGuide && "rotate-90")} />
-          </button>
-          <AnimatePresence>
-            {showIOSGuide && (
-              <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                <div className="px-5 pb-5 space-y-3 border-t border-border">
-                  <p className="text-sm text-muted-foreground pt-3">ב-Safari בלבד:</p>
-                  {[{ icon: '⬆️', text: 'לחץ על כפתור השיתוף בתחתית' }, { icon: '➕', text: 'בחר "הוסף למסך הבית"' }, { icon: '✅', text: 'לחץ "הוסף"' }].map((s, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-muted/50 rounded-xl px-4 py-3"><span className="text-2xl">{s.icon}</span><span className="text-sm font-medium">{s.text}</span></div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="flex-1 text-right"><h4 className="font-bold text-blue-700 dark:text-blue-400 text-lg">התקן על iPhone / iPad</h4><p className="text-sm text-muted-foreground">עקוב אחרי 3 שלבים פשוטים</p></div>
+          </div>
+          <div className="px-5 pb-5 space-y-3 border-t border-border">
+            {[
+              { icon: '1️⃣', text: 'פתח את הדף ב-Safari (לא Chrome!)', accent: true },
+              { icon: '2️⃣', text: 'לחץ על כפתור השיתוף ⬆️ בתחתית המסך' },
+              { icon: '3️⃣', text: 'בחר "הוסף למסך הבית" ← לחץ "הוסף"' },
+            ].map((s, i) => (
+              <div key={i} className={cn("flex items-center gap-3 rounded-xl px-4 py-3", s.accent ? "bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800" : "bg-muted/50")}>
+                <span className="text-xl">{s.icon}</span>
+                <span className="text-sm font-medium">{s.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="bg-muted/50 border border-border rounded-2xl p-5 flex items-center gap-4">
@@ -1180,6 +1188,338 @@ function ProjectDetail({ project, settings, onUpdate, onDeleteProject }: {
               </div>
             )}
           </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ============================================================
+// --- GithubImport — ייבוא מאגרים מ-GitHub לפרויקטים ---
+// ============================================================
+interface GithubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+  html_url: string;
+  description: string | null;
+  updated_at: string;
+  language: string | null;
+  stargazers_count: number;
+  default_branch: string;
+}
+
+function GithubImport({ settings, projects, onImported }: {
+  settings: AppSettings,
+  projects: Project[],
+  onImported: (p: Project) => void
+}) {
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [error, setError] = useState('');
+  const [deployingRepo, setDeployingRepo] = useState<string | null>(null);
+  const [deletingRepo, setDeletingRepo] = useState<string | null>(null);
+  const [repoToDelete, setRepoToDelete] = useState<GithubRepo | null>(null);
+  const [deployProgress, setDeployProgress] = useState('');
+  const [successRepos, setSuccessRepos] = useState<Set<string>>(new Set());
+
+  const PER_PAGE = 20;
+
+  useEffect(() => { loadRepos(1, false); }, []);
+
+  const loadRepos = async (p: number, append: boolean) => {
+    if (!settings.githubToken) { setError('נא להגדיר GitHub Token בהגדרות'); return; }
+    setIsLoading(true); setError('');
+    try {
+      const r = await fetch(`/api/github/user/repos?per_page=${PER_PAGE}&page=${p}&sort=updated&type=all`, {
+        headers: { Authorization: `token ${settings.githubToken}`, Accept: 'application/vnd.github.v3+json' }
+      });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.message || `שגיאת GitHub: ${r.status}`); }
+      const data: GithubRepo[] = await r.json();
+      setHasMore(data.length === PER_PAGE);
+      setPage(p);
+      if (append) setRepos(prev => [...prev, ...data]);
+      else setRepos(data);
+    } catch (e: any) { setError(e.message); }
+    finally { setIsLoading(false); }
+  };
+
+  const deployRepo = async (repo: GithubRepo) => {
+    if (!settings.cloudflareApiKey || !settings.cloudflareAccountId) {
+      alert('נא להגדיר Cloudflare API Token ו-Account ID בהגדרות');
+      return;
+    }
+    const cfName = repo.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '').substring(0, 58);
+    if (!confirm(`לחבר את "${repo.full_name}" ל-Cloudflare Pages כ-"${cfName}"?`)) return;
+
+    setDeployingRepo(repo.full_name);
+    setDeployProgress('יוצר פרויקט ב-Cloudflare Pages...');
+    try {
+      // Check if CF project already exists
+      const checkRes = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${cfName}`, {
+        headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` }
+      });
+
+      let actualName = cfName;
+      let productionUrl = `https://${cfName}.pages.dev`;
+
+      if (!checkRes.ok) {
+        // Create Cloudflare Pages project linked to existing GitHub repo
+        const [owner, repoName] = repo.full_name.split('/');
+        const cfRes = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: cfName,
+            build_config: { build_command: "", destination_dir: ".", root_dir: "" },
+            deployment_configs: {
+              production: { environment_variables: { NODE_VERSION: "18" } },
+              preview: { environment_variables: { NODE_VERSION: "18" } }
+            },
+            source: {
+              type: "github",
+              config: {
+                owner,
+                repo_name: repoName,
+                production_branch: repo.default_branch || 'main',
+                pr_comments_enabled: true,
+                deployments_enabled: true
+              }
+            }
+          })
+        });
+        const cfData = await cfRes.json();
+        if (!cfRes.ok || cfData.success === false) throw new Error(`שגיאת Cloudflare: ${cfData.errors?.[0]?.message || cfRes.status}`);
+        actualName = cfData.result?.name || cfName;
+        productionUrl = cfData.result?.subdomain ? `https://${cfData.result.subdomain}` : `https://${actualName}.pages.dev`;
+      } else {
+        const cfData = await checkRes.json();
+        actualName = cfData.result?.name || cfName;
+        productionUrl = cfData.result?.subdomain ? `https://${cfData.result.subdomain}` : productionUrl;
+      }
+
+      setDeployProgress('ממתין לפריסה הראשונה...');
+
+      // Wait for deployment
+      let attempts = 0, finalUrl = productionUrl;
+      while (attempts < 15) {
+        attempts++;
+        await new Promise(r => setTimeout(r, 5000));
+        try {
+          const dr = await fetch(`/api/cloudflare/accounts/${settings.cloudflareAccountId}/pages/projects/${actualName}/deployments`, { headers: { 'Authorization': `Bearer ${settings.cloudflareApiKey}` } });
+          if (dr.ok) {
+            const dd = await dr.json();
+            if (dd.result?.length > 0) {
+              const l = dd.result[0];
+              const s = l.latest_stage?.status || l.status;
+              if (s === 'success') { if (l.url) finalUrl = l.url; break; }
+              if (s === 'failure') break;
+              setDeployProgress(`סטטוס: ${s}... (${attempts}/15)`);
+            }
+          }
+        } catch {}
+      }
+
+      const newProject: Project = {
+        id: `gh-${repo.id}-${Date.now()}`,
+        name: actualName,
+        githubRepo: repo.full_name,
+        cloudflareProject: actualName,
+        lastDeployment: new Date().toISOString(),
+        status: 'success',
+        productionUrl: finalUrl,
+        productionBranch: repo.default_branch || 'main'
+      };
+      onImported(newProject);
+      setSuccessRepos(prev => new Set([...prev, repo.full_name]));
+      alert(`✅ "${repo.name}" מחובר ל-Cloudflare Pages בהצלחה!`);
+    } catch (e: any) { alert(`שגיאה: ${e.message}`); }
+    finally { setDeployingRepo(null); setDeployProgress(''); }
+  };
+
+  const deleteRepo = async (repo: GithubRepo) => {
+    setDeletingRepo(repo.full_name);
+    try {
+      const r = await fetch(`/api/github/repos/${repo.full_name}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `token ${settings.githubToken}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        }
+      });
+      if (r.ok || r.status === 204 || r.status === 404) {
+        setRepos(prev => prev.filter(x => x.full_name !== repo.full_name));
+        setRepoToDelete(null);
+        alert(`✅ המאגר "${repo.name}" נמחק מ-GitHub`);
+      } else {
+        const d = await r.json();
+        throw new Error(d.message || `שגיאה: ${r.status}`);
+      }
+    } catch (e: any) { alert(`מחיקה נכשלה: ${e.message}`); }
+    finally { setDeletingRepo(null); }
+  };
+
+  const filtered = repos.filter(r =>
+    r.name.toLowerCase().includes(search.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(search.toLowerCase())
+  );
+
+  const isAlreadyDeployed = (repo: GithubRepo) =>
+    projects.some(p => p.githubRepo === repo.full_name) || successRepos.has(repo.full_name);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center text-white shadow-md shrink-0"><Github className="w-8 h-8" /></div>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">ייבוא מ-GitHub</h2>
+          <p className="text-muted-foreground">בחר מאגר וחבר אותו אוטומטית ל-Cloudflare Pages</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="חפש מאגר..."
+          className="w-full px-5 py-3 pr-12 rounded-2xl border border-border bg-card outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+        />
+        <RefreshCw className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 bg-red-500/10 text-red-600 rounded-2xl text-sm flex items-center gap-2 border border-red-500/20">
+          <AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span>
+        </div>
+      )}
+
+      {/* Deploy progress overlay */}
+      {deployingRepo && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 flex items-center gap-3">
+          <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />
+          <div>
+            <p className="text-sm font-bold text-primary">מחבר: {deployingRepo}</p>
+            <p className="text-xs text-muted-foreground">{deployProgress}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Repos list */}
+      {isLoading && !repos.length ? (
+        <div className="flex flex-col items-center py-16 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">טוען מאגרים...</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.length === 0 && !isLoading && (
+            <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl text-muted-foreground">
+              {search ? 'לא נמצאו מאגרים התואמים לחיפוש' : 'לא נמצאו מאגרים'}
+            </div>
+          )}
+          {filtered.map(repo => {
+            const deployed = isAlreadyDeployed(repo);
+            const isDeployingThis = deployingRepo === repo.full_name;
+            const isDeletingThis = deletingRepo === repo.full_name;
+            return (
+              <motion.div key={repo.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className={cn("bg-card border rounded-2xl p-5 transition-all", deployed ? "border-green-500/30 bg-green-500/5" : "border-border hover:border-primary/30 hover:shadow-md")}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="font-bold text-base hover:text-primary transition-colors hover:underline truncate">
+                        {repo.name}
+                      </a>
+                      {repo.private && <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-medium shrink-0">פרטי</span>}
+                      {deployed && <span className="text-[10px] bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3 h-3" />מחובר</span>}
+                    </div>
+                    {repo.description && <p className="text-sm text-muted-foreground mb-2 truncate">{repo.description}</p>}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                      <span className="font-mono">{repo.full_name}</span>
+                      {repo.language && <span className="bg-muted px-2 py-0.5 rounded-full">{repo.language}</span>}
+                      <span>{new Date(repo.updated_at).toLocaleDateString('he-IL')}</span>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <button
+                      onClick={() => deployRepo(repo)}
+                      disabled={!!deployingRepo || deployed}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap",
+                        deployed ? "bg-green-500/10 text-green-600 cursor-default" :
+                        "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                      )}
+                    >
+                      {isDeployingThis ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : deployed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <CloudUpload className="w-3.5 h-3.5" />}
+                      <span>{isDeployingThis ? 'מחבר...' : deployed ? 'מחובר' : 'פרוס ב-CF'}</span>
+                    </button>
+                    <button
+                      onClick={() => setRepoToDelete(repo)}
+                      disabled={!!deletingRepo || !!deployingRepo}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-all disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {isDeletingThis ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      <span>{isDeletingThis ? 'מוחק...' : 'מחק'}</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Load more */}
+      {hasMore && !search && (
+        <div className="flex justify-center pt-2">
+          <button onClick={() => loadRepos(page + 1, true)} disabled={isLoading} className="inline-flex items-center gap-2 bg-card border border-border px-8 py-3 rounded-xl font-semibold hover:bg-muted/50 transition-all disabled:opacity-70 shadow-sm">
+            {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>טוען...</span></> : <><ChevronDown className="w-5 h-5" /><span>טען עוד ({PER_PAGE})</span></>}
+          </button>
+        </div>
+      )}
+
+      {/* Delete repo modal */}
+      <AnimatePresence>
+        {repoToDelete && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !deletingRepo && setRepoToDelete(null)} className="fixed inset-0 bg-black/80 z-[200]" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed inset-0 z-[201] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-zinc-900 border-2 border-red-200 dark:border-red-900 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.4)] p-6 max-w-sm w-full space-y-5" dir="rtl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0"><Trash2 className="w-6 h-6 text-red-600" /></div>
+                  <div><h3 className="text-lg font-bold">מחיקת מאגר GitHub</h3><p className="text-sm text-muted-foreground">{repoToDelete.name}</p></div>
+                </div>
+                <div className="bg-red-50 dark:bg-red-950 border-2 border-red-300 dark:border-red-700 rounded-2xl p-4 space-y-2 text-sm">
+                  <p className="font-bold text-red-700 dark:text-red-400 text-base">⚠️ פעולה בלתי הפיכה!</p>
+                  <div className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                    <Github className="w-4 h-4 text-red-500 shrink-0" />
+                    <span>יימחק: <b className="text-red-700 dark:text-red-400">{repoToDelete.full_name}</b></span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => deleteRepo(repoToDelete)}
+                    disabled={!!deletingRepo}
+                    className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {deletingRepo ? <><Loader2 className="w-4 h-4 animate-spin" /><span>מוחק...</span></> : <><Trash2 className="w-4 h-4" /><span>מחק מאגר</span></>}
+                  </button>
+                  <button onClick={() => setRepoToDelete(null)} disabled={!!deletingRepo} className="px-6 py-3 bg-muted text-foreground rounded-2xl font-bold hover:bg-muted/80 transition-colors disabled:opacity-60">ביטול</button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.div>
