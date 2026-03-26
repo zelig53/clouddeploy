@@ -105,7 +105,79 @@ body {
   }
 }
 
-/* ── scrollbar hide utility ─────────────────────────────── */
+/* ── Help Center Modal — force opaque backgrounds ───────── */
+/* The modal sits over the app; all semi-transparent tokens
+   must be replaced with fully opaque equivalents           */
+.help-modal-body {
+  --card:             #ffffff;
+  --card-foreground:  #0f172a;
+  --muted:            #f1f5f9;
+  --muted-foreground: #64748b;
+  --border:           #e2e8f0;
+  --primary:          #2563eb;
+  --primary-foreground: #ffffff;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark .help-modal-body {
+  --card:             #1e293b;
+  --card-foreground:  #f1f5f9;
+  --muted:            #334155;
+  --muted-foreground: #94a3b8;
+  --border:           #475569;
+  --primary:          #3b82f6;
+  --primary-foreground: #ffffff;
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Opaque replacements for every tinted utility used inside cards */
+.help-modal-body .bg-card             { background-color: #ffffff !important; }
+.dark .help-modal-body .bg-card       { background-color: #1e293b !important; }
+
+.help-modal-body [class*="bg-muted"]  { background-color: #f1f5f9 !important; }
+.dark .help-modal-body [class*="bg-muted"] { background-color: #334155 !important; }
+
+/* Tinted info boxes — light mode */
+.help-modal-body [class*="bg-blue-50"]   { background-color: #eff6ff !important; }
+.help-modal-body [class*="bg-green-50"]  { background-color: #f0fdf4 !important; }
+.help-modal-body [class*="bg-red-50"]    { background-color: #fef2f2 !important; }
+.help-modal-body [class*="bg-amber-50"]  { background-color: #fffbeb !important; }
+.help-modal-body [class*="bg-orange-50"] { background-color: #fff7ed !important; }
+.help-modal-body [class*="bg-teal-50"]   { background-color: #f0fdfa !important; }
+.help-modal-body [class*="bg-violet-50"] { background-color: #f5f3ff !important; }
+.help-modal-body [class*="bg-indigo-50"] { background-color: #eef2ff !important; }
+.help-modal-body [class*="bg-purple-50"] { background-color: #faf5ff !important; }
+
+/* Tinted info boxes — dark mode */
+.dark .help-modal-body [class*="bg-blue-50"]    { background-color: #1e3a5f !important; }
+.dark .help-modal-body [class*="bg-green-50"]   { background-color: #14532d !important; }
+.dark .help-modal-body [class*="bg-red-50"]     { background-color: #450a0a !important; }
+.dark .help-modal-body [class*="bg-amber-50"]   { background-color: #451a03 !important; }
+.dark .help-modal-body [class*="bg-orange-50"]  { background-color: #431407 !important; }
+.dark .help-modal-body [class*="bg-teal-50"]    { background-color: #042f2e !important; }
+.dark .help-modal-body [class*="bg-violet-50"]  { background-color: #2e1065 !important; }
+.dark .help-modal-body [class*="bg-indigo-50"]  { background-color: #1e1b4b !important; }
+.dark .help-modal-body [class*="bg-purple-50"]  { background-color: #3b0764 !important; }
+
+/* Tinted step cards (orange/red/green) */
+.help-modal-body [class*="bg-orange-100"]  { background-color: #ffedd5 !important; }
+.help-modal-body [class*="bg-red-100"]     { background-color: #fee2e2 !important; }
+.help-modal-body [class*="bg-green-100"]   { background-color: #dcfce7 !important; }
+.help-modal-body [class*="bg-green-900"]   { background-color: #14532d !important; }
+.help-modal-body [class*="bg-blue-100"]    { background-color: #dbeafe !important; }
+.help-modal-body [class*="bg-blue-900"]    { background-color: #1e3a5f !important; }
+.help-modal-body [class*="bg-amber-100"]   { background-color: #fef3c7 !important; }
+.dark .help-modal-body [class*="bg-orange-100"] { background-color: #431407 !important; }
+.dark .help-modal-body [class*="bg-red-100"]    { background-color: #450a0a !important; }
+.dark .help-modal-body [class*="bg-green-100"]  { background-color: #14532d !important; }
+
+/* gradient "from-*-50" intro box */
+.help-modal-body [class*="from-violet-50"] { background: linear-gradient(to left, #ede9fe, #f5f3ff) !important; }
+.dark .help-modal-body [class*="from-violet-50"] { background: linear-gradient(to left, #2e1065, #3b0764) !important; }
+
+
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
