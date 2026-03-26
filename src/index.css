@@ -53,30 +53,61 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  gap: 10px;
+  align-items: stretch;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
 
 .action-btn {
-  padding: 0.75rem 1.25rem;
-  min-width: 0;
-  flex: 1 1 auto;
-  max-width: calc(50% - 5px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
+  line-height: 1.2;
+}
+
+/* On very narrow screens (< 400px) — each button full width */
+@media (max-width: 399px) {
+  .action-btn {
+    flex: 1 0 100%;
+  }
+}
+
+/* Between 400-639px — two per row */
+@media (min-width: 400px) and (max-width: 639px) {
+  .action-btn {
+    flex: 1 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+  }
+  /* "פרויקט חדש" gets full row on its own if it's the 3rd */
+  .action-btn:last-child:nth-child(odd) {
+    flex: 1 0 100%;
+  }
 }
 
 @media (min-width: 640px) {
   .action-btn {
     flex: 0 1 auto;
     max-width: none;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.1rem;
   }
 }
+
+/* ── scrollbar hide utility ─────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ── Root overflow guard ────────────────────────────────── */
 html, body, #root {

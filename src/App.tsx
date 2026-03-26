@@ -305,6 +305,517 @@ function DeleteConfirmModal({ project, settings, onConfirm, onCancel }: {
   );
 }
 
+// ============================================================
+// --- HelpCenterModal — מרכז הדרכה מלא ---
+// ============================================================
+const HELP_STEPS = [
+  {
+    id: 'intro',
+    icon: <Zap className="w-5 h-5" />,
+    label: 'מבוא',
+    color: 'from-violet-600 to-purple-700',
+    accent: '#7c3aed',
+    title: 'מה זה CloudDeploy?',
+    subtitle: 'אוטומציה מלאה של פריסה לענן',
+    content: (
+      <div className="space-y-4">
+        <div className="bg-gradient-to-l from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 text-sm leading-relaxed">
+          <p className="font-bold text-violet-800 dark:text-violet-300 text-base mb-2">💡 הרעיון בקצרה</p>
+          <p className="text-gray-700 dark:text-gray-300">CloudDeploy מחבר בין <b>GitHub</b> ל-<b>Cloudflare Pages</b> — ומאפשר לך לפרוס, לנהל ולמחוק פרויקטים מהנייד, ללא צורך בשורת פקודה.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3">
+          {[
+            { icon: '🚀', title: 'פריסה מהירה', desc: 'בחר מאגר GitHub ותוך שניות הוא עולה ל-Cloudflare Pages' },
+            { icon: '📱', title: 'ניהול מהנייד', desc: 'לוח בקרה מלא שעובד כ-PWA ישירות ממסך הבית שלך' },
+            { icon: '🔄', title: 'סנכרון אוטומטי', desc: 'כל push ל-GitHub מפרוס אוטומטית את האתר שלך' },
+            { icon: '🗑️', title: 'מחיקה בטוחה', desc: 'מחיקה כפולה עם אישור — מגנה מפני טעויות' },
+          ].map(item => (
+            <div key={item.title} className="flex items-start gap-3 bg-card border border-border rounded-xl p-3">
+              <span className="text-2xl shrink-0">{item.icon}</span>
+              <div><p className="font-bold text-sm">{item.title}</p><p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p></div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
+          <b>🔁 הזרימה הבסיסית:</b> הגדרות (API Keys) ← ייבוא מאגר ← הפרויקט חי ← שינויים עוברים אוטומטית
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'settings',
+    icon: <Key className="w-5 h-5" />,
+    label: 'הגדרות',
+    color: 'from-gray-700 to-gray-900',
+    accent: '#374151',
+    title: 'חיבור מפתחות API',
+    subtitle: 'שלב ראשון — חובה לפני כל דבר',
+    content: (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">האפליקציה צריכה שלושה מפתחות כדי לעבוד. כולם חינמיים ומתקבלים בכמה קליקים:</p>
+
+        {/* GitHub Token */}
+        <div className="border-2 border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-l from-gray-800 to-gray-900 px-4 py-3 flex items-center gap-2 text-white">
+            <Github className="w-4 h-4" /><span className="font-bold text-sm">GitHub Personal Access Token</span>
+          </div>
+          <div className="p-4 space-y-2">
+            {[
+              'פתח github.com ← לחץ על תמונת הפרופיל',
+              'Settings ← Developer settings ← Personal access tokens',
+              'Tokens (classic) ← Generate new token (classic)',
+              'שם: "CloudDeploy" | תוקף: No expiration',
+              <span key="scope">סמן: <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded font-mono text-xs font-bold">repo</span> + <span className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-2 py-0.5 rounded font-mono text-xs font-bold">delete_repo</span></span>,
+              <span key="copy"><b>Generate token</b> ← <span className="text-red-600 font-bold">העתק מיד!</span> (לא יוצג שוב)</span>,
+            ].map((step, i) => (
+              <div key={i} className="flex gap-2.5 items-start text-sm">
+                <span className="w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                <div className="leading-relaxed">{step}</div>
+              </div>
+            ))}
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-300 mt-2">
+              ⚠️ ללא <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">delete_repo</code> מחיקת פרויקטים לא תעבוד
+            </div>
+          </div>
+        </div>
+
+        {/* Cloudflare Token */}
+        <div className="border-2 border-orange-200 dark:border-orange-800 rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-l from-orange-500 to-orange-700 px-4 py-3 flex items-center gap-2 text-white">
+            <Cloud className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare API Token</span>
+          </div>
+          <div className="p-4 space-y-2">
+            {[
+              <span key="1">פתח <b>dash.cloudflare.com</b> ← My Profile ← API Tokens</span>,
+              'Create Token ← Custom Token (Get started)',
+              'שם: "CloudDeploy"',
+              <div key="perms" className="space-y-1">
+                <span>הוסף הרשאות:</span>
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg px-3 py-2 font-mono text-xs space-y-1 mt-1">
+                  <div>Account → <b>Cloudflare Pages</b> → Edit</div>
+                  <div>Account → <b>Account Settings</b> → Read</div>
+                </div>
+              </div>,
+              <span key="5">Continue to summary ← <b>Create Token</b> ← <span className="text-red-600 font-bold">העתק מיד!</span></span>,
+            ].map((step, i) => (
+              <div key={i} className="flex gap-2.5 items-start text-sm">
+                <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                <div className="leading-relaxed">{step}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Account ID */}
+        <div className="border-2 border-blue-200 dark:border-blue-800 rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 flex items-center gap-2 text-white">
+            <Shield className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare Account ID</span>
+          </div>
+          <div className="p-4 space-y-3 text-sm">
+            <p>ה-Account ID נמצא ב-URL של Cloudflare:</p>
+            <div className="bg-muted rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed">
+              dash.cloudflare.com/<span className="bg-yellow-200 dark:bg-yellow-700/60 text-black dark:text-yellow-200 px-1.5 py-0.5 rounded font-bold animate-pulse">8a2b3c4d5e6f7g8h</span>/pages
+            </div>
+            <p className="text-muted-foreground text-xs">העתק את המחרוזת הארוכה שבין הלוכסנים</p>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'import',
+    icon: <Github className="w-5 h-5" />,
+    label: 'ייבוא',
+    color: 'from-indigo-600 to-blue-700',
+    accent: '#4f46e5',
+    title: 'ייבוא וחיבור פרויקטים',
+    subtitle: 'שני מסלולים — בחר את המתאים לך',
+    content: (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
+          {/* Track A */}
+          <div className="border-2 border-indigo-200 dark:border-indigo-800 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-l from-indigo-600 to-blue-700 px-4 py-3 text-white">
+              <p className="font-bold text-sm">🔵 מסלול א׳ — סנכרון מ-Cloudflare</p>
+              <p className="text-xs text-white/80 mt-0.5">כשיש לך כבר פרויקטים פעילים ב-Cloudflare Pages</p>
+            </div>
+            <div className="p-4 space-y-2">
+              {['לחץ "סנכרן מ-Cloudflare" בלוח הבקרה', 'הפרויקטים הקיימים יופיעו אוטומטית', 'לחץ על פרויקט כדי לנהל אותו'].map((s, i) => (
+                <div key={i} className="flex gap-2.5 items-start text-sm">
+                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                  <span>{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Track B */}
+          <div className="border-2 border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-l from-gray-800 to-gray-900 px-4 py-3 text-white">
+              <p className="font-bold text-sm">⚫ מסלול ב׳ — ייבוא מ-GitHub</p>
+              <p className="text-xs text-white/80 mt-0.5">כשרוצים לפרוס מאגר GitHub חדש ל-Cloudflare</p>
+            </div>
+            <div className="p-4 space-y-2">
+              {[
+                'לחץ "ייבוא מ-GitHub" — רשימת המאגרים שלך תופיע',
+                'חפש מאגר ← לחץ "פרוס ל-Cloudflare"',
+                'CloudDeploy יוצר אוטומטית דף חדש ב-Cloudflare Pages',
+                'הפרויקט מופיע בלוח הבקרה ומוכן לניהול',
+              ].map((s, i) => (
+                <div key={i} className="flex gap-2.5 items-start text-sm">
+                  <span className="w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                  <span>{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Track C */}
+          <div className="border-2 border-green-200 dark:border-green-800 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-l from-green-600 to-emerald-700 px-4 py-3 text-white">
+              <p className="font-bold text-sm">🟢 מסלול ג׳ — פרויקט חדש לגמרי</p>
+              <p className="text-xs text-white/80 mt-0.5">יוצר מאגר GitHub + דף Cloudflare בבת אחת</p>
+            </div>
+            <div className="p-4 space-y-2">
+              {[
+                'לחץ "פרויקט חדש" ← מלא שם ותיאור',
+                'CloudDeploy יוצר מאגר GitHub ריק',
+                'ומחבר אותו אוטומטית ל-Cloudflare Pages',
+                'תוך שניות הפרויקט חי ומוכן!',
+              ].map((s, i) => (
+                <div key={i} className="flex gap-2.5 items-start text-sm">
+                  <span className="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+                  <span>{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'manage',
+    icon: <LayoutGrid className="w-5 h-5" />,
+    label: 'ניהול',
+    color: 'from-teal-600 to-cyan-700',
+    accent: '#0d9488',
+    title: 'ניהול ופריסה',
+    subtitle: 'כל מה שאפשר לעשות עם פרויקט קיים',
+    content: (
+      <div className="space-y-4">
+        {/* Card anatomy */}
+        <p className="text-sm text-muted-foreground">כרטיס פרויקט מכיל את כל המידע במבט אחד:</p>
+        <div className="border-2 border-teal-200 dark:border-teal-800 rounded-2xl p-4 space-y-3 bg-card">
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary"><Github className="w-4 h-4" /></div>
+            <div className="flex items-center gap-1">
+              <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center"><Globe className="w-3.5 h-3.5 text-muted-foreground" /></div>
+              <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center"><Cloud className="w-3.5 h-3.5 text-muted-foreground" /></div>
+              <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center"><Trash2 className="w-3.5 h-3.5 text-red-400" /></div>
+            </div>
+          </div>
+          <div>
+            <p className="font-bold text-sm">my-awesome-site</p>
+            <p className="text-xs text-muted-foreground font-mono">username/my-awesome-site</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded-full font-medium">פעיל</span>
+            <span className="text-muted-foreground">26.3.2026</span>
+          </div>
+          <div className="flex items-center justify-end text-primary text-xs font-semibold">
+            <span>נהל פרויקט</span><ArrowLeft className="w-3 h-3 mr-1" />
+          </div>
+        </div>
+        {/* Legend */}
+        <div className="space-y-2">
+          {[
+            { icon: <Globe className="w-4 h-4 text-primary" />, label: 'כפתור גלובוס', desc: 'פתיחת האתר החי בדפדפן' },
+            { icon: <Cloud className="w-4 h-4 text-orange-500" />, label: 'כפתור ענן', desc: 'מעבר ישיר לדשבורד Cloudflare של הפרויקט' },
+            { icon: <Trash2 className="w-4 h-4 text-red-500" />, label: 'כפתור מחיקה', desc: 'מחיקה בטוחה עם אישור כפול' },
+            { icon: <History className="w-4 h-4 text-muted-foreground" />, label: 'מספר הפריסות', desc: 'כמה פעמים הפרויקט נפרס עד כה' },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-3 text-sm bg-muted/40 rounded-xl px-3 py-2.5">
+              <span className="shrink-0">{item.icon}</span>
+              <div><span className="font-semibold">{item.label}</span> — <span className="text-muted-foreground text-xs">{item.desc}</span></div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 rounded-xl p-3 text-xs text-teal-800 dark:text-teal-300">
+          💡 לחיצה על הכרטיס פותחת את דף הפרויקט המלא עם היסטוריית פריסות ואפשרות עדכון
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'delete',
+    icon: <Trash2 className="w-5 h-5" />,
+    label: 'מחיקה',
+    color: 'from-red-600 to-rose-700',
+    accent: '#dc2626',
+    title: 'מחיקה בטוחה',
+    subtitle: 'מנגנון אישור כפול — לא ניתן לטעות',
+    content: (
+      <div className="space-y-4">
+        <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 text-sm space-y-2">
+          <p className="font-bold text-red-700 dark:text-red-400">⚠️ מחיקה היא בלתי הפיכה!</p>
+          <p className="text-gray-700 dark:text-gray-300 text-xs">CloudDeploy מוחק גם מ-Cloudflare Pages וגם מ-GitHub — ולכן דורש אישור נפרד לכל שירות.</p>
+        </div>
+        {/* Flow */}
+        <div className="space-y-3">
+          {[
+            { step: 1, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Trash2 className="w-4 h-4 text-orange-600" />, title: 'לחיצה על סמל המחיקה', desc: 'נפתח חלון אישור עם פרטי הפרויקט' },
+            { step: 2, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Cloud className="w-4 h-4 text-orange-600" />, title: 'אישור ראשון — Cloudflare', desc: 'לחץ "אשר מחיקת Cloudflare" לאישור מחיקת הדף מ-Cloudflare Pages' },
+            { step: 3, color: 'bg-red-100 dark:bg-red-950/40 border-red-300 dark:border-red-700', icon: <Github className="w-4 h-4 text-red-600" />, title: 'אישור שני — GitHub', desc: 'לחץ "אשר מחיקת GitHub" לאישור מחיקת המאגר מ-GitHub' },
+            { step: 4, color: 'bg-green-100 dark:bg-green-950/40 border-green-300 dark:border-green-700', icon: <Check className="w-4 h-4 text-green-600" />, title: 'מחיקה מתבצעת', desc: 'CloudDeploy מוחק משני השירותים ומסיר מלוח הבקרה' },
+          ].map(item => (
+            <div key={item.step} className={`border-2 rounded-xl p-3 flex gap-3 items-start ${item.color}`}>
+              <div className="w-8 h-8 rounded-xl bg-white/60 dark:bg-black/20 flex items-center justify-center shrink-0">{item.icon}</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">{item.title}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mt-0.5">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
+          💡 ניתן לבטל בכל שלב עם כפתור "ביטול" — הפרויקט לא ייפגע
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'pwa',
+    icon: <Smartphone className="w-5 h-5" />,
+    label: 'התקנה',
+    color: 'from-green-600 to-emerald-700',
+    accent: '#16a34a',
+    title: 'התקנה כאפליקציה (PWA)',
+    subtitle: 'גישה מיידית ממסך הבית — ללא App Store',
+    content: (
+      <div className="space-y-4">
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-sm">
+          <p className="font-bold text-green-700 dark:text-green-400 mb-1">✅ יתרונות ה-PWA</p>
+          <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
+            <li>• נפתח כאפליקציה מלאה ללא שורת הכתובת</li>
+            <li>• עובד גם במצב לא מקוון (Offline)</li>
+            <li>• מתעדכן אוטומטית בכל פתיחה</li>
+            <li>• נראה ומרגיש בדיוק כמו אפליקציה רגילה</li>
+          </ul>
+        </div>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Android */}
+          <div className="border-2 border-green-200 dark:border-green-800 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-l from-green-600 to-emerald-700 px-4 py-3 text-white flex items-center gap-2">
+              <span className="text-lg">🤖</span><span className="font-bold text-sm">Android — Chrome</span>
+            </div>
+            <div className="p-4 space-y-2.5">
+              {[
+                { icon: '🌐', text: 'פתח את CloudDeploy ב-Chrome' },
+                { icon: '⋮', text: 'לחץ על תפריט שלוש הנקודות (פינה ימנית עליונה)' },
+                { icon: '📲', text: 'בחר "הוסף למסך הבית" או "התקן אפליקציה"' },
+                { icon: '✅', text: 'לחץ "הוסף" — האפליקציה מופיעה כאייקון!' },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 items-center text-sm">
+                  <span className="w-7 h-7 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+              <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-2.5 text-xs text-green-800 dark:text-green-300 mt-1">
+                💡 Chrome עשוי להציג באנר "התקן" אוטומטית בתחתית המסך
+              </div>
+            </div>
+          </div>
+          {/* iPhone */}
+          <div className="border-2 border-blue-200 dark:border-blue-800 rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 text-white flex items-center gap-2">
+              <span className="text-lg">🍎</span><span className="font-bold text-sm">iPhone / iPad — Safari בלבד</span>
+            </div>
+            <div className="p-4 space-y-2.5">
+              {[
+                { icon: '🧭', text: 'פתח את CloudDeploy ב-Safari (חובה! לא Chrome)' },
+                { icon: '⬆️', text: 'לחץ על כפתור השיתוף (תחתית המסך)' },
+                { icon: '➕', text: 'גלול ובחר "הוסף למסך הבית"' },
+                { icon: '✅', text: 'לחץ "הוסף" (פינה ימנית עליונה)' },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 items-center text-sm">
+                  <span className="w-7 h-7 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-2.5 text-xs text-amber-800 dark:text-amber-300 mt-1">
+                ⚠️ ב-iPhone, ב-Chrome אין אפשרות להתקין — חייב להשתמש ב-Safari
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'tips',
+    icon: <Star className="w-5 h-5" />,
+    label: 'טיפים',
+    color: 'from-amber-500 to-orange-600',
+    accent: '#d97706',
+    title: 'טיפים מתקדמים',
+    subtitle: 'שימוש חכם יותר ב-CloudDeploy',
+    content: (
+      <div className="space-y-3">
+        {[
+          {
+            icon: '🔑', title: 'אבטח את המפתחות',
+            desc: 'אל תשתף את ה-Tokens עם אף אחד. אם חשפת טוקן — בטל אותו מיד ב-GitHub/Cloudflare וצור חדש.',
+          },
+          {
+            icon: '📌', title: 'No Expiration — אבל בזהירות',
+            desc: 'טוקן ללא תפוגה נוח, אבל אם הוא נגנב — הנזק גדול יותר. הגדר תזכורת לחידוש כל 6 חודשים.',
+          },
+          {
+            icon: '🔄', title: 'סנכרן לפני שאתה מנהל',
+            desc: 'לחץ "סנכרן מ-Cloudflare" בכל פעם שחזרת לאפליקציה — כדי לוודא שהנתונים עדכניים.',
+          },
+          {
+            icon: '🗑️', title: 'מחיקה חלקית אפשרית',
+            desc: 'אם אתה רוצה למחוק רק מ-Cloudflare (ולהשאיר את ה-GitHub) — לחץ ביטול אחרי האישור הראשון.',
+          },
+          {
+            icon: '🌐', title: 'דומיין מותאם אישית',
+            desc: 'אחרי פריסה, ניתן להגדיר דומיין משלך ישירות ב-Cloudflare Pages — CloudDeploy לא עוסק בזה, אבל מספק לינק ישיר לדשבורד.',
+          },
+          {
+            icon: '📊', title: 'עקוב אחרי פריסות',
+            desc: 'כמות הפריסות בכרטיס מציגה כמה פעמים הפרויקט עודכן. גדול = פרויקט פעיל ובריא.',
+          },
+        ].map(tip => (
+          <div key={tip.title} className="flex gap-3 items-start bg-card border border-border rounded-xl p-3">
+            <span className="text-xl shrink-0 mt-0.5">{tip.icon}</span>
+            <div><p className="font-bold text-sm">{tip.title}</p><p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{tip.desc}</p></div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+];
+
+function HelpCenterModal({ onClose }: { onClose: () => void }) {
+  const [activeStep, setActiveStep] = useState(0);
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300]"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+        className="fixed inset-0 z-[301] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      >
+        <div className="bg-background w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col overflow-hidden" style={{maxHeight: '92vh'}}>
+
+          {/* Header */}
+          <div className="bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center"><BookOpen className="w-5 h-5" /></div>
+              <div>
+                <h3 className="font-bold text-lg leading-tight">מרכז הדרכה</h3>
+                <p className="text-primary-foreground/70 text-xs">מדריך שימוש מלא ב-CloudDeploy</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-9 h-9 rounded-2xl bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Step tabs — horizontal scroll */}
+          <div className="flex overflow-x-auto border-b border-border bg-muted/30 shrink-0 scrollbar-hide">
+            {HELP_STEPS.map((step, i) => (
+              <button
+                key={step.id}
+                onClick={() => setActiveStep(i)}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-3 py-2.5 text-[10px] font-bold shrink-0 border-b-2 transition-all min-w-[64px]",
+                  activeStep === i
+                    ? "border-primary text-primary bg-background"
+                    : "border-transparent text-muted-foreground hover:bg-muted/60"
+                )}
+              >
+                <span className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center transition-all",
+                  activeStep === i ? "bg-primary text-primary-foreground scale-110" : "bg-muted"
+                )}>{step.icon}</span>
+                <span className="leading-tight text-center">{step.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 bg-muted shrink-0">
+            <motion.div
+              className="h-full bg-primary"
+              animate={{ width: `${((activeStep + 1) / HELP_STEPS.length) * 100}%` }}
+              transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto flex-1 p-5" dir="rtl">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeStep}
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-4"
+              >
+                {/* Step title */}
+                <div className={`rounded-2xl p-4 text-white bg-gradient-to-l ${HELP_STEPS[activeStep].color}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl">{HELP_STEPS[activeStep].icon}</div>
+                    <div>
+                      <h4 className="font-bold text-base">{HELP_STEPS[activeStep].title}</h4>
+                      <p className="text-white/75 text-xs mt-0.5">{HELP_STEPS[activeStep].subtitle}</p>
+                    </div>
+                  </div>
+                </div>
+                {HELP_STEPS[activeStep].content}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Footer navigation */}
+          <div className="flex gap-3 p-4 border-t border-border bg-muted/20 shrink-0">
+            <button
+              onClick={() => setActiveStep(p => Math.max(0, p - 1))}
+              disabled={activeStep === 0}
+              className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+            >
+              <ChevronRight className="w-4 h-4" /><span>הקודם</span>
+            </button>
+            <span className="flex items-center text-xs text-muted-foreground font-medium shrink-0">
+              {activeStep + 1} / {HELP_STEPS.length}
+            </span>
+            {activeStep < HELP_STEPS.length - 1 ? (
+              <button
+                onClick={() => setActiveStep(p => Math.min(HELP_STEPS.length - 1, p + 1))}
+                className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              >
+                <span>הבא</span><ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 rounded-2xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" /><span>הבנתי!</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
 // --- App ---
 export default function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -317,6 +828,7 @@ export default function App() {
   const [showInstallSheet, setShowInstallSheet] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
@@ -397,6 +909,9 @@ export default function App() {
                 <Smartphone className="w-4 h-4" /><span className="text-xs font-bold">התקן</span>
               </button>
             )}
+            <button onClick={() => setShowHelpCenter(true)} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-primary" title="מרכז הדרכה">
+              <HelpCircle className="w-5 h-5" />
+            </button>
             <button onClick={toggleTheme} className="p-2 hover:bg-muted rounded-full transition-colors">{settings.theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}</button>
             <button onClick={() => navigateTo('settings')} className="p-2 hover:bg-muted rounded-full transition-colors"><SettingsIcon className="w-5 h-5" /></button>
           </div>
@@ -405,7 +920,7 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 overflow-x-hidden min-w-0">
         <AnimatePresence mode="wait">
-          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(p) => setProjectToDelete(p)} settings={settings} onSync={setProjects} onGithubImport={() => navigateTo('github-import')} />}
+          {view === 'dashboard' && <Dashboard projects={projects} onNewProject={() => navigateTo('create')} onSelectProject={(p) => navigateTo('project-detail', p)} onDeleteProject={(p) => setProjectToDelete(p)} settings={settings} onSync={setProjects} onGithubImport={() => navigateTo('github-import')} onShowHelp={() => setShowHelpCenter(true)} />}
           {view === 'create' && <CreateProject settings={settings} onSuccess={(p) => { setProjects(prev => [p, ...prev]); navigateTo('dashboard'); }} />}
           {view === 'settings' && <Settings settings={settings} onSave={setSettings} onInstall={handleInstall} isInstallAvailable={!!deferredPrompt && !isInstalled} isInstalled={isInstalled} />}
           {view === 'project-detail' && selectedProject && <ProjectDetail project={selectedProject} settings={settings} onUpdate={(u) => { setProjects(prev => prev.map(p => p.id === u.id ? u : p)); setSelectedProject(u); }} onDeleteProject={(p) => setProjectToDelete(p)} />}
@@ -467,6 +982,11 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* מרכז הדרכה */}
+      <AnimatePresence>
+        {showHelpCenter && <HelpCenterModal onClose={() => setShowHelpCenter(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
@@ -474,10 +994,10 @@ export default function App() {
 // =================================================================
 // --- Dashboard (שיפור #1 - Pagination + שיפור #3 + שיפור #6) ---
 // =================================================================
-function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, settings, onSync, onGithubImport }: {
+function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, settings, onSync, onGithubImport, onShowHelp }: {
   projects: Project[], onNewProject: () => void, onSelectProject: (p: Project) => void,
   onDeleteProject: (p: Project) => void, settings: AppSettings, onSync: (p: Project[]) => void,
-  onGithubImport: () => void
+  onGithubImport: () => void, onShowHelp: () => void
 }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -563,7 +1083,13 @@ function Dashboard({ projects, onNewProject, onSelectProject, onDeleteProject, s
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center gap-4 w-full">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-md border border-primary/20 shrink-0"><CloudUpload className="w-8 h-8" /></div>
-          <div><h2 className="text-3xl font-bold tracking-tight">לוח בקרה</h2><p className="text-muted-foreground">נהל את הפרויקטים שלך ופרוס ל-Cloudflare Pages</p></div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-3xl font-bold tracking-tight">לוח בקרה</h2>
+            <p className="text-muted-foreground">נהל את הפרויקטים שלך ופרוס ל-Cloudflare Pages</p>
+          </div>
+          <button onClick={onShowHelp} className="shrink-0 w-10 h-10 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors" title="מרכז הדרכה">
+            <HelpCircle className="w-5 h-5" />
+          </button>
         </div>
         <div className="action-buttons-row">
           {/* שיפור #6 - Loading state בכפתור סנכרון */}
