@@ -728,7 +728,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Step tabs — horizontal scroll */}
-          <div className="flex overflow-x-auto border-b-2 border-slate-300 dark:border-zinc-600 bg-slate-200 dark:bg-zinc-800 shrink-0 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b-2 border-zinc-200 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
             {HELP_STEPS.map((step, i) => (
               <button
                 key={step.id}
@@ -736,13 +736,13 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2.5 text-[10px] font-bold shrink-0 border-b-2 transition-all min-w-[64px]",
                   activeStep === i
-                    ? "border-primary text-primary bg-white dark:bg-zinc-900"
-                    : "border-transparent text-gray-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/60"
+                    ? "border-primary text-primary bg-white dark:bg-zinc-700 shadow-sm"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60"
                 )}
               >
                 <span className={cn(
                   "w-8 h-8 rounded-xl flex items-center justify-center transition-all",
-                  activeStep === i ? "bg-primary text-primary-foreground scale-110" : "bg-muted"
+                  activeStep === i ? "bg-primary text-primary-foreground scale-110" : "bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300"
                 )}>{step.icon}</span>
                 <span className="leading-tight text-center">{step.label}</span>
               </button>
@@ -783,32 +783,50 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Footer navigation */}
-          <div className="flex gap-3 p-4 border-t-2 border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 shrink-0">
-            <button
-              onClick={() => setActiveStep(p => Math.max(0, p - 1))}
-              disabled={activeStep === 0}
-              className="flex-1 py-3 rounded-2xl bg-slate-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 font-bold text-sm hover:bg-slate-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-25 flex items-center justify-center gap-2 border border-slate-300 dark:border-zinc-600"
-            >
-              <ChevronRight className="w-4 h-4" /><span>הקודם</span>
-            </button>
-            <span className="flex items-center text-xs text-gray-600 dark:text-gray-400 font-bold shrink-0">
-              {activeStep + 1} / {HELP_STEPS.length}
-            </span>
-            {activeStep < HELP_STEPS.length - 1 ? (
+          <div className="flex flex-col gap-2 p-4 border-t-2 border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 shrink-0">
+            {/* Counter row */}
+            <div className="flex items-center justify-center gap-2">
+              {HELP_STEPS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveStep(i)}
+                  className={cn(
+                    "transition-all rounded-full",
+                    i === activeStep
+                      ? "w-6 h-2.5 bg-primary"
+                      : "w-2.5 h-2.5 bg-slate-300 dark:bg-zinc-600 hover:bg-slate-400 dark:hover:bg-zinc-500"
+                  )}
+                />
+              ))}
+              <span className="text-xs font-bold text-gray-600 dark:text-gray-400 mr-1">
+                {activeStep + 1}/{HELP_STEPS.length}
+              </span>
+            </div>
+            {/* Buttons row */}
+            <div className="flex gap-3">
               <button
-                onClick={() => setActiveStep(p => Math.min(HELP_STEPS.length - 1, p + 1))}
-                className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                onClick={() => setActiveStep(p => Math.max(0, p - 1))}
+                disabled={activeStep === 0}
+                className="flex-1 py-3 rounded-2xl bg-slate-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 font-bold text-sm hover:bg-slate-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-30 flex items-center justify-center gap-2 border border-slate-300 dark:border-zinc-600"
               >
-                <span>הבא</span><ArrowLeft className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" /><span>הקודם</span>
               </button>
-            ) : (
-              <button
-                onClick={onClose}
-                className="flex-1 py-3 rounded-2xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition-all flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" /><span>הבנתי!</span>
-              </button>
-            )}
+              {activeStep < HELP_STEPS.length - 1 ? (
+                <button
+                  onClick={() => setActiveStep(p => Math.min(HELP_STEPS.length - 1, p + 1))}
+                  className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>הבא</span><ArrowLeft className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-3 rounded-2xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-md"
+                >
+                  <Check className="w-4 h-4" /><span>הבנתי!</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -1300,10 +1318,10 @@ function Settings({ settings, onSave, onInstall, isInstallAvailable, isInstalled
                 <div className="p-2.5 bg-white/20 rounded-xl"><BookOpen className="w-5 h-5" /></div>
                 <div><h3 className="text-lg font-bold">מדריך שלב-אחרי-שלב</h3><p className="text-primary-foreground/80 text-sm">מיועד לכולם</p></div>
               </div>
-              <div className="grid grid-cols-4 border-b border-border bg-muted/20">
+              <div className="grid grid-cols-4 border-b border-zinc-200 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800">
                 {(Object.keys(guideData) as Array<keyof typeof guideData>).map(tab => (
-                  <button key={tab} onClick={() => setGuideTab(tab)} className={cn("flex flex-col items-center gap-1.5 py-3 px-1 text-xs font-bold transition-all border-b-2", guideTab === tab ? "border-primary text-primary bg-background" : "border-transparent text-muted-foreground hover:bg-muted/50")}>
-                    <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", guideTab === tab ? "bg-primary text-primary-foreground" : "bg-muted")}>{guideData[tab].icon}</span>
+                  <button key={tab} onClick={() => setGuideTab(tab)} className={cn("flex flex-col items-center gap-1.5 py-3 px-1 text-xs font-bold transition-all border-b-2", guideTab === tab ? "border-primary text-primary bg-white dark:bg-zinc-700 shadow-sm" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60")}>
+                    <span className={cn("w-8 h-8 rounded-lg flex items-center justify-center", guideTab === tab ? "bg-primary text-white" : "bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300")}>{guideData[tab].icon}</span>
                     <span className="hidden sm:block text-[10px]">{guideData[tab].label}</span>
                   </button>
                 ))}
