@@ -319,9 +319,9 @@ const HELP_STEPS = [
     subtitle: 'אוטומציה מלאה של פריסה לענן',
     content: (
       <div className="space-y-4">
-        <div className="bg-gradient-to-l from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 text-sm leading-relaxed">
-          <p className="font-bold text-violet-800 dark:text-violet-300 text-base mb-2">💡 הרעיון בקצרה</p>
-          <p className="text-gray-700 dark:text-gray-300">CloudDeploy מחבר בין <b>GitHub</b> ל-<b>Cloudflare Pages</b> — ומאפשר לך לפרוס, לנהל ולמחוק פרויקטים מהנייד, ללא צורך בשורת פקודה.</p>
+        <div className="bg-violet-50 dark:bg-violet-950 border-2 border-violet-200 dark:border-violet-700 rounded-2xl p-4 text-sm leading-relaxed shadow-sm">
+          <p className="font-bold text-violet-900 dark:text-violet-200 text-base mb-2">💡 הרעיון בקצרה</p>
+          <p className="text-gray-900 dark:text-gray-200">CloudDeploy מחבר בין <b>GitHub</b> ל-<b>Cloudflare Pages</b> — ומאפשר לך לפרוס, לנהל ולמחוק פרויקטים מהנייד, ללא צורך בשורת פקודה.</p>
         </div>
         <div className="grid grid-cols-1 gap-3">
           {[
@@ -330,13 +330,13 @@ const HELP_STEPS = [
             { icon: '🔄', title: 'סנכרון אוטומטי', desc: 'כל push ל-GitHub מפרוס אוטומטית את האתר שלך' },
             { icon: '🗑️', title: 'מחיקה בטוחה', desc: 'מחיקה כפולה עם אישור — מגנה מפני טעויות' },
           ].map(item => (
-            <div key={item.title} className="flex items-start gap-3 bg-card border border-border rounded-xl p-3">
+            <div key={item.title} className="flex items-start gap-3 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 shadow-sm">
               <span className="text-2xl shrink-0">{item.icon}</span>
-              <div><p className="font-bold text-sm">{item.title}</p><p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p></div>
+              <div><p className="font-bold text-sm text-gray-900 dark:text-gray-100">{item.title}</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{item.desc}</p></div>
             </div>
           ))}
         </div>
-        <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
+        <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-3 text-xs text-blue-900 dark:text-blue-200 font-medium">
           <b>🔁 הזרימה הבסיסית:</b> הגדרות (API Keys) ← ייבוא מאגר ← הפרויקט חי ← שינויים עוברים אוטומטית
         </div>
       </div>
@@ -352,14 +352,14 @@ const HELP_STEPS = [
     subtitle: 'שלב ראשון — חובה לפני כל דבר',
     content: (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">האפליקציה צריכה שלושה מפתחות כדי לעבוד. כולם חינמיים ומתקבלים בכמה קליקים:</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">האפליקציה צריכה שלושה מפתחות כדי לעבוד. כולם חינמיים ומתקבלים בכמה קליקים:</p>
 
         {/* GitHub Token */}
         <div className="border-2 border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-l from-gray-800 to-gray-900 px-4 py-3 flex items-center gap-2 text-white">
             <Github className="w-4 h-4" /><span className="font-bold text-sm">GitHub Personal Access Token</span>
           </div>
-          <div className="p-4 space-y-2">
+          <div className="p-4 space-y-2 bg-white dark:bg-zinc-800">
             {[
               'פתח github.com ← לחץ על תמונת הפרופיל',
               'Settings ← Developer settings ← Personal access tokens',
@@ -368,12 +368,12 @@ const HELP_STEPS = [
               <span key="scope">סמן: <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded font-mono text-xs font-bold">repo</span> + <span className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-2 py-0.5 rounded font-mono text-xs font-bold">delete_repo</span></span>,
               <span key="copy"><b>Generate token</b> ← <span className="text-red-600 font-bold">העתק מיד!</span> (לא יוצג שוב)</span>,
             ].map((step, i) => (
-              <div key={i} className="flex gap-2.5 items-start text-sm">
-                <span className="w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
+              <div key={i} className="flex gap-2.5 items-start text-sm text-gray-900 dark:text-gray-100">
+                <span className="w-5 h-5 rounded-full bg-gray-700 dark:bg-gray-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
                 <div className="leading-relaxed">{step}</div>
               </div>
             ))}
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-300 mt-2">
+            <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-600 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200 mt-2 font-medium">
               ⚠️ ללא <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">delete_repo</code> מחיקת פרויקטים לא תעבוד
             </div>
           </div>
@@ -384,21 +384,21 @@ const HELP_STEPS = [
           <div className="bg-gradient-to-l from-orange-500 to-orange-700 px-4 py-3 flex items-center gap-2 text-white">
             <Cloud className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare API Token</span>
           </div>
-          <div className="p-4 space-y-2">
+          <div className="p-4 space-y-2 bg-white dark:bg-zinc-800">
             {[
               <span key="1">פתח <b>dash.cloudflare.com</b> ← My Profile ← API Tokens</span>,
               'Create Token ← Custom Token (Get started)',
               'שם: "CloudDeploy"',
               <div key="perms" className="space-y-1">
                 <span>הוסף הרשאות:</span>
-                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg px-3 py-2 font-mono text-xs space-y-1 mt-1">
+                <div className="bg-orange-50 dark:bg-orange-950 border border-orange-300 dark:border-orange-700 rounded-lg px-3 py-2 font-mono text-xs space-y-1 mt-1 text-gray-900 dark:text-gray-100">
                   <div>Account → <b>Cloudflare Pages</b> → Edit</div>
                   <div>Account → <b>Account Settings</b> → Read</div>
                 </div>
               </div>,
               <span key="5">Continue to summary ← <b>Create Token</b> ← <span className="text-red-600 font-bold">העתק מיד!</span></span>,
             ].map((step, i) => (
-              <div key={i} className="flex gap-2.5 items-start text-sm">
+              <div key={i} className="flex gap-2.5 items-start text-sm text-gray-900 dark:text-gray-100">
                 <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
                 <div className="leading-relaxed">{step}</div>
               </div>
@@ -411,12 +411,12 @@ const HELP_STEPS = [
           <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 flex items-center gap-2 text-white">
             <Shield className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare Account ID</span>
           </div>
-          <div className="p-4 space-y-3 text-sm">
-            <p>ה-Account ID נמצא ב-URL של Cloudflare:</p>
-            <div className="bg-muted rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed">
+          <div className="p-4 space-y-3 text-sm bg-white dark:bg-zinc-800">
+            <p className="text-gray-900 dark:text-gray-100">ה-Account ID נמצא ב-URL של Cloudflare:</p>
+            <div className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed text-gray-900 dark:text-gray-100">
               dash.cloudflare.com/<span className="bg-yellow-200 dark:bg-yellow-700/60 text-black dark:text-yellow-200 px-1.5 py-0.5 rounded font-bold animate-pulse">8a2b3c4d5e6f7g8h</span>/pages
             </div>
-            <p className="text-muted-foreground text-xs">העתק את המחרוזת הארוכה שבין הלוכסנים</p>
+            <p className="text-gray-600 dark:text-gray-400 text-xs">העתק את המחרוזת הארוכה שבין הלוכסנים</p>
           </div>
         </div>
       </div>
@@ -439,11 +439,11 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">🔵 מסלול א׳ — סנכרון מ-Cloudflare</p>
               <p className="text-xs text-white/80 mt-0.5">כשיש לך כבר פרויקטים פעילים ב-Cloudflare Pages</p>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2 bg-indigo-50 dark:bg-zinc-800">
               {['לחץ "סנכרן מ-Cloudflare" בלוח הבקרה', 'הפרויקטים הקיימים יופיעו אוטומטית', 'לחץ על פרויקט כדי לנהל אותו'].map((s, i) => (
                 <div key={i} className="flex gap-2.5 items-start text-sm">
                   <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
-                  <span>{s}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{s}</span>
                 </div>
               ))}
             </div>
@@ -454,7 +454,7 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">⚫ מסלול ב׳ — ייבוא מ-GitHub</p>
               <p className="text-xs text-white/80 mt-0.5">כשרוצים לפרוס מאגר GitHub חדש ל-Cloudflare</p>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2 bg-gray-50 dark:bg-zinc-800">
               {[
                 'לחץ "ייבוא מ-GitHub" — רשימת המאגרים שלך תופיע',
                 'חפש מאגר ← לחץ "פרוס ל-Cloudflare"',
@@ -463,7 +463,7 @@ const HELP_STEPS = [
               ].map((s, i) => (
                 <div key={i} className="flex gap-2.5 items-start text-sm">
                   <span className="w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
-                  <span>{s}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{s}</span>
                 </div>
               ))}
             </div>
@@ -474,7 +474,7 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">🟢 מסלול ג׳ — פרויקט חדש לגמרי</p>
               <p className="text-xs text-white/80 mt-0.5">יוצר מאגר GitHub + דף Cloudflare בבת אחת</p>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2 bg-green-50 dark:bg-zinc-800">
               {[
                 'לחץ "פרויקט חדש" ← מלא שם ותיאור',
                 'CloudDeploy יוצר מאגר GitHub ריק',
@@ -483,7 +483,7 @@ const HELP_STEPS = [
               ].map((s, i) => (
                 <div key={i} className="flex gap-2.5 items-start text-sm">
                   <span className="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
-                  <span>{s}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{s}</span>
                 </div>
               ))}
             </div>
@@ -503,8 +503,8 @@ const HELP_STEPS = [
     content: (
       <div className="space-y-4">
         {/* Card anatomy */}
-        <p className="text-sm text-muted-foreground">כרטיס פרויקט מכיל את כל המידע במבט אחד:</p>
-        <div className="border-2 border-teal-200 dark:border-teal-800 rounded-2xl p-4 space-y-3 bg-card">
+        <p className="text-sm text-gray-700 dark:text-gray-300">כרטיס פרויקט מכיל את כל המידע במבט אחד:</p>
+        <div className="border-2 border-teal-200 dark:border-teal-800 rounded-2xl p-4 space-y-3 bg-white dark:bg-zinc-800">
           <div className="flex items-center justify-between">
             <div className="p-2 bg-primary/10 rounded-xl text-primary"><Github className="w-4 h-4" /></div>
             <div className="flex items-center gap-1">
@@ -515,7 +515,7 @@ const HELP_STEPS = [
           </div>
           <div>
             <p className="font-bold text-sm">my-awesome-site</p>
-            <p className="text-xs text-muted-foreground font-mono">username/my-awesome-site</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">username/my-awesome-site</p>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="bg-green-500/10 text-green-600 px-2 py-1 rounded-full font-medium">פעיל</span>
@@ -533,13 +533,13 @@ const HELP_STEPS = [
             { icon: <Trash2 className="w-4 h-4 text-red-500" />, label: 'כפתור מחיקה', desc: 'מחיקה בטוחה עם אישור כפול' },
             { icon: <History className="w-4 h-4 text-muted-foreground" />, label: 'מספר הפריסות', desc: 'כמה פעמים הפרויקט נפרס עד כה' },
           ].map(item => (
-            <div key={item.label} className="flex items-center gap-3 text-sm bg-muted/40 rounded-xl px-3 py-2.5">
+            <div key={item.label} className="flex items-center gap-3 text-sm bg-slate-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5">
               <span className="shrink-0">{item.icon}</span>
-              <div><span className="font-semibold">{item.label}</span> — <span className="text-muted-foreground text-xs">{item.desc}</span></div>
+              <div><span className="font-semibold text-gray-900 dark:text-gray-100">{item.label}</span> — <span className="text-gray-600 dark:text-gray-400 text-xs">{item.desc}</span></div>
             </div>
           ))}
         </div>
-        <div className="bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 rounded-xl p-3 text-xs text-teal-800 dark:text-teal-300">
+        <div className="bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 rounded-xl p-3 text-xs text-teal-900 dark:text-teal-200 font-medium">
           💡 לחיצה על הכרטיס פותחת את דף הפרויקט המלא עם היסטוריית פריסות ואפשרות עדכון
         </div>
       </div>
@@ -555,28 +555,28 @@ const HELP_STEPS = [
     subtitle: 'מנגנון אישור כפול — לא ניתן לטעות',
     content: (
       <div className="space-y-4">
-        <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 text-sm space-y-2">
+        <div className="bg-red-50 dark:bg-red-950 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 text-sm space-y-2">
           <p className="font-bold text-red-700 dark:text-red-400">⚠️ מחיקה היא בלתי הפיכה!</p>
           <p className="text-gray-700 dark:text-gray-300 text-xs">CloudDeploy מוחק גם מ-Cloudflare Pages וגם מ-GitHub — ולכן דורש אישור נפרד לכל שירות.</p>
         </div>
         {/* Flow */}
         <div className="space-y-3">
           {[
-            { step: 1, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Trash2 className="w-4 h-4 text-orange-600" />, title: 'לחיצה על סמל המחיקה', desc: 'נפתח חלון אישור עם פרטי הפרויקט' },
-            { step: 2, color: 'bg-orange-100 dark:bg-orange-950/40 border-orange-300 dark:border-orange-700', icon: <Cloud className="w-4 h-4 text-orange-600" />, title: 'אישור ראשון — Cloudflare', desc: 'לחץ "אשר מחיקת Cloudflare" לאישור מחיקת הדף מ-Cloudflare Pages' },
-            { step: 3, color: 'bg-red-100 dark:bg-red-950/40 border-red-300 dark:border-red-700', icon: <Github className="w-4 h-4 text-red-600" />, title: 'אישור שני — GitHub', desc: 'לחץ "אשר מחיקת GitHub" לאישור מחיקת המאגר מ-GitHub' },
-            { step: 4, color: 'bg-green-100 dark:bg-green-950/40 border-green-300 dark:border-green-700', icon: <Check className="w-4 h-4 text-green-600" />, title: 'מחיקה מתבצעת', desc: 'CloudDeploy מוחק משני השירותים ומסיר מלוח הבקרה' },
+            { step: 1, color: 'bg-orange-100 dark:bg-orange-950 border-orange-300 dark:border-orange-600', icon: <Trash2 className="w-4 h-4 text-orange-600" />, title: 'לחיצה על סמל המחיקה', desc: 'נפתח חלון אישור עם פרטי הפרויקט' },
+            { step: 2, color: 'bg-orange-100 dark:bg-orange-950 border-orange-300 dark:border-orange-600', icon: <Cloud className="w-4 h-4 text-orange-600" />, title: 'אישור ראשון — Cloudflare', desc: 'לחץ "אשר מחיקת Cloudflare" לאישור מחיקת הדף מ-Cloudflare Pages' },
+            { step: 3, color: 'bg-red-100 dark:bg-red-950 border-red-300 dark:border-red-600', icon: <Github className="w-4 h-4 text-red-600" />, title: 'אישור שני — GitHub', desc: 'לחץ "אשר מחיקת GitHub" לאישור מחיקת המאגר מ-GitHub' },
+            { step: 4, color: 'bg-green-100 dark:bg-green-950 border-green-300 dark:border-green-600', icon: <Check className="w-4 h-4 text-green-600" />, title: 'מחיקה מתבצעת', desc: 'CloudDeploy מוחק משני השירותים ומסיר מלוח הבקרה' },
           ].map(item => (
             <div key={item.step} className={`border-2 rounded-xl p-3 flex gap-3 items-start ${item.color}`}>
-              <div className="w-8 h-8 rounded-xl bg-white/60 dark:bg-black/20 flex items-center justify-center shrink-0">{item.icon}</div>
+              <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-sm">{item.icon}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm">{item.title}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mt-0.5">{item.desc}</p>
+                <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-800 dark:text-blue-300">
+        <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-3 text-xs text-blue-900 dark:text-blue-200 font-medium">
           💡 ניתן לבטל בכל שלב עם כפתור "ביטול" — הפרויקט לא ייפגע
         </div>
       </div>
@@ -592,9 +592,9 @@ const HELP_STEPS = [
     subtitle: 'גישה מיידית ממסך הבית — ללא App Store',
     content: (
       <div className="space-y-4">
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 text-sm">
-          <p className="font-bold text-green-700 dark:text-green-400 mb-1">✅ יתרונות ה-PWA</p>
-          <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300">
+        <div className="bg-green-50 dark:bg-green-950 border-2 border-green-200 dark:border-green-700 rounded-2xl p-4 text-sm">
+          <p className="font-bold text-green-800 dark:text-green-400 mb-1">✅ יתרונות ה-PWA</p>
+          <ul className="space-y-1 text-xs text-gray-800 dark:text-gray-200">
             <li>• נפתח כאפליקציה מלאה ללא שורת הכתובת</li>
             <li>• עובד גם במצב לא מקוון (Offline)</li>
             <li>• מתעדכן אוטומטית בכל פתיחה</li>
@@ -607,7 +607,7 @@ const HELP_STEPS = [
             <div className="bg-gradient-to-l from-green-600 to-emerald-700 px-4 py-3 text-white flex items-center gap-2">
               <span className="text-lg">🤖</span><span className="font-bold text-sm">Android — Chrome</span>
             </div>
-            <div className="p-4 space-y-2.5">
+            <div className="p-4 space-y-2.5 bg-green-50 dark:bg-zinc-800">
               {[
                 { icon: '🌐', text: 'פתח את CloudDeploy ב-Chrome' },
                 { icon: '⋮', text: 'לחץ על תפריט שלוש הנקודות (פינה ימנית עליונה)' },
@@ -615,11 +615,11 @@ const HELP_STEPS = [
                 { icon: '✅', text: 'לחץ "הוסף" — האפליקציה מופיעה כאייקון!' },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 items-center text-sm">
-                  <span className="w-7 h-7 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
-                  <span>{item.text}</span>
+                  <span className="w-7 h-7 bg-green-200 dark:bg-green-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{item.text}</span>
                 </div>
               ))}
-              <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-2.5 text-xs text-green-800 dark:text-green-300 mt-1">
+              <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-700 rounded-xl p-2.5 text-xs text-green-800 dark:text-green-200 mt-1">
                 💡 Chrome עשוי להציג באנר "התקן" אוטומטית בתחתית המסך
               </div>
             </div>
@@ -629,7 +629,7 @@ const HELP_STEPS = [
             <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 text-white flex items-center gap-2">
               <span className="text-lg">🍎</span><span className="font-bold text-sm">iPhone / iPad — Safari בלבד</span>
             </div>
-            <div className="p-4 space-y-2.5">
+            <div className="p-4 space-y-2.5 bg-blue-50 dark:bg-zinc-800">
               {[
                 { icon: '🧭', text: 'פתח את CloudDeploy ב-Safari (חובה! לא Chrome)' },
                 { icon: '⬆️', text: 'לחץ על כפתור השיתוף (תחתית המסך)' },
@@ -637,11 +637,11 @@ const HELP_STEPS = [
                 { icon: '✅', text: 'לחץ "הוסף" (פינה ימנית עליונה)' },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 items-center text-sm">
-                  <span className="w-7 h-7 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
-                  <span>{item.text}</span>
+                  <span className="w-7 h-7 bg-blue-200 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-base shrink-0">{item.icon}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{item.text}</span>
                 </div>
               ))}
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-xl p-2.5 text-xs text-amber-800 dark:text-amber-300 mt-1">
+              <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-600 rounded-xl p-2.5 text-xs text-amber-900 dark:text-amber-200 mt-1">
                 ⚠️ ב-iPhone, ב-Chrome אין אפשרות להתקין — חייב להשתמש ב-Safari
               </div>
             </div>
@@ -686,9 +686,9 @@ const HELP_STEPS = [
             desc: 'כמות הפריסות בכרטיס מציגה כמה פעמים הפרויקט עודכן. גדול = פרויקט פעיל ובריא.',
           },
         ].map(tip => (
-          <div key={tip.title} className="flex gap-3 items-start bg-card border border-border rounded-xl p-3">
+          <div key={tip.title} className="flex gap-3 items-start bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 shadow-sm">
             <span className="text-xl shrink-0 mt-0.5">{tip.icon}</span>
-            <div><p className="font-bold text-sm">{tip.title}</p><p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{tip.desc}</p></div>
+            <div><p className="font-bold text-sm text-gray-900 dark:text-gray-100">{tip.title}</p><p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-0.5">{tip.desc}</p></div>
           </div>
         ))}
       </div>
@@ -704,14 +704,14 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/85 backdrop-blur-md z-[300]"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300]"
       />
       <motion.div
         initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
         className="fixed inset-0 z-[301] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <div className="w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col overflow-hidden bg-white dark:bg-zinc-900" style={{maxHeight: '92vh'}}>
+        <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-slate-200 dark:border-zinc-700" style={{maxHeight: '92vh'}}>
 
           {/* Header */}
           <div className="bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0">
@@ -728,7 +728,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Step tabs — horizontal scroll */}
-          <div className="flex overflow-x-auto border-b border-border bg-zinc-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
             {HELP_STEPS.map((step, i) => (
               <button
                 key={step.id}
@@ -737,7 +737,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
                   "flex flex-col items-center gap-1 px-3 py-2.5 text-[10px] font-bold shrink-0 border-b-2 transition-all min-w-[64px]",
                   activeStep === i
                     ? "border-primary text-primary bg-background"
-                    : "border-transparent text-muted-foreground hover:bg-muted/60"
+                    : "border-transparent text-gray-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/60"
                 )}
               >
                 <span className={cn(
@@ -759,7 +759,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto flex-1 p-5 bg-white dark:bg-zinc-900 help-modal-body" dir="rtl">
+          <div className="overflow-y-auto flex-1 p-5 bg-slate-50 dark:bg-zinc-900" dir="rtl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeStep}
@@ -783,7 +783,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Footer navigation */}
-          <div className="flex gap-3 p-4 border-t border-border bg-zinc-50 dark:bg-zinc-800 shrink-0">
+          <div className="flex gap-3 p-4 border-t border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shrink-0">
             <button
               onClick={() => setActiveStep(p => Math.max(0, p - 1))}
               disabled={activeStep === 0}
