@@ -359,7 +359,7 @@ const HELP_STEPS = [
           <div className="bg-gradient-to-l from-gray-800 to-gray-900 px-4 py-3 flex items-center gap-2 text-white">
             <Github className="w-4 h-4" /><span className="font-bold text-sm">GitHub Personal Access Token</span>
           </div>
-          <div className="p-4 space-y-2 bg-white dark:bg-zinc-800">
+          <div className="p-4 space-y-2 bg-gray-50 dark:bg-zinc-800">
             {[
               'פתח github.com ← לחץ על תמונת הפרופיל',
               'Settings ← Developer settings ← Personal access tokens',
@@ -384,7 +384,7 @@ const HELP_STEPS = [
           <div className="bg-gradient-to-l from-orange-500 to-orange-700 px-4 py-3 flex items-center gap-2 text-white">
             <Cloud className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare API Token</span>
           </div>
-          <div className="p-4 space-y-2 bg-white dark:bg-zinc-800">
+          <div className="p-4 space-y-2 bg-gray-50 dark:bg-zinc-800">
             {[
               <span key="1">פתח <b>dash.cloudflare.com</b> ← My Profile ← API Tokens</span>,
               'Create Token ← Custom Token (Get started)',
@@ -411,7 +411,7 @@ const HELP_STEPS = [
           <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 flex items-center gap-2 text-white">
             <Shield className="w-4 h-4" /><span className="font-bold text-sm">Cloudflare Account ID</span>
           </div>
-          <div className="p-4 space-y-3 text-sm bg-white dark:bg-zinc-800">
+          <div className="p-4 space-y-3 text-sm bg-gray-50 dark:bg-zinc-700">
             <p className="text-gray-900 dark:text-gray-100">ה-Account ID נמצא ב-URL של Cloudflare:</p>
             <div className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-600 rounded-xl p-3 font-mono text-xs break-all text-center leading-relaxed text-gray-900 dark:text-gray-100">
               dash.cloudflare.com/<span className="bg-yellow-200 dark:bg-yellow-700/60 text-black dark:text-yellow-200 px-1.5 py-0.5 rounded font-bold animate-pulse">8a2b3c4d5e6f7g8h</span>/pages
@@ -439,7 +439,7 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">🔵 מסלול א׳ — סנכרון מ-Cloudflare</p>
               <p className="text-xs text-white/80 mt-0.5">כשיש לך כבר פרויקטים פעילים ב-Cloudflare Pages</p>
             </div>
-            <div className="p-4 space-y-2 bg-indigo-50 dark:bg-zinc-800">
+            <div className="p-4 space-y-2 bg-indigo-50 dark:bg-zinc-700">
               {['לחץ "סנכרן מ-Cloudflare" בלוח הבקרה', 'הפרויקטים הקיימים יופיעו אוטומטית', 'לחץ על פרויקט כדי לנהל אותו'].map((s, i) => (
                 <div key={i} className="flex gap-2.5 items-start text-sm">
                   <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i+1}</span>
@@ -454,7 +454,7 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">⚫ מסלול ב׳ — ייבוא מ-GitHub</p>
               <p className="text-xs text-white/80 mt-0.5">כשרוצים לפרוס מאגר GitHub חדש ל-Cloudflare</p>
             </div>
-            <div className="p-4 space-y-2 bg-gray-50 dark:bg-zinc-800">
+            <div className="p-4 space-y-2 bg-gray-50 dark:bg-zinc-700">
               {[
                 'לחץ "ייבוא מ-GitHub" — רשימת המאגרים שלך תופיע',
                 'חפש מאגר ← לחץ "פרוס ל-Cloudflare"',
@@ -474,7 +474,7 @@ const HELP_STEPS = [
               <p className="font-bold text-sm">🟢 מסלול ג׳ — פרויקט חדש לגמרי</p>
               <p className="text-xs text-white/80 mt-0.5">יוצר מאגר GitHub + דף Cloudflare בבת אחת</p>
             </div>
-            <div className="p-4 space-y-2 bg-green-50 dark:bg-zinc-800">
+            <div className="p-4 space-y-2 bg-green-50 dark:bg-zinc-700">
               {[
                 'לחץ "פרויקט חדש" ← מלא שם ותיאור',
                 'CloudDeploy יוצר מאגר GitHub ריק',
@@ -504,7 +504,7 @@ const HELP_STEPS = [
       <div className="space-y-4">
         {/* Card anatomy */}
         <p className="text-sm text-gray-700 dark:text-gray-300">כרטיס פרויקט מכיל את כל המידע במבט אחד:</p>
-        <div className="border-2 border-teal-200 dark:border-teal-800 rounded-2xl p-4 space-y-3 bg-white dark:bg-zinc-800">
+        <div className="border-2 border-teal-300 dark:border-teal-700 rounded-2xl p-4 space-y-3 bg-white dark:bg-zinc-700 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="p-2 bg-primary/10 rounded-xl text-primary"><Github className="w-4 h-4" /></div>
             <div className="flex items-center gap-1">
@@ -514,7 +514,7 @@ const HELP_STEPS = [
             </div>
           </div>
           <div>
-            <p className="font-bold text-sm">my-awesome-site</p>
+            <p className="font-bold text-sm text-gray-900 dark:text-gray-100">my-awesome-site</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">username/my-awesome-site</p>
           </div>
           <div className="flex items-center gap-2 text-xs">
@@ -522,7 +522,7 @@ const HELP_STEPS = [
             <span className="text-muted-foreground">26.3.2026</span>
           </div>
           <div className="flex items-center justify-end text-primary text-xs font-semibold">
-            <span>נהל פרויקט</span><ArrowLeft className="w-3 h-3 mr-1" />
+            <span className="text-primary">נהל פרויקט</span><ArrowLeft className="w-3 h-3 mr-1" />
           </div>
         </div>
         {/* Legend */}
@@ -533,7 +533,7 @@ const HELP_STEPS = [
             { icon: <Trash2 className="w-4 h-4 text-red-500" />, label: 'כפתור מחיקה', desc: 'מחיקה בטוחה עם אישור כפול' },
             { icon: <History className="w-4 h-4 text-muted-foreground" />, label: 'מספר הפריסות', desc: 'כמה פעמים הפרויקט נפרס עד כה' },
           ].map(item => (
-            <div key={item.label} className="flex items-center gap-3 text-sm bg-slate-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5">
+            <div key={item.label} className="flex items-center gap-3 text-sm bg-slate-100 dark:bg-zinc-700 rounded-xl px-3 py-2.5 border border-slate-200 dark:border-zinc-600">
               <span className="shrink-0">{item.icon}</span>
               <div><span className="font-semibold text-gray-900 dark:text-gray-100">{item.label}</span> — <span className="text-gray-600 dark:text-gray-400 text-xs">{item.desc}</span></div>
             </div>
@@ -607,7 +607,7 @@ const HELP_STEPS = [
             <div className="bg-gradient-to-l from-green-600 to-emerald-700 px-4 py-3 text-white flex items-center gap-2">
               <span className="text-lg">🤖</span><span className="font-bold text-sm">Android — Chrome</span>
             </div>
-            <div className="p-4 space-y-2.5 bg-green-50 dark:bg-zinc-800">
+            <div className="p-4 space-y-2.5 bg-green-50 dark:bg-zinc-700">
               {[
                 { icon: '🌐', text: 'פתח את CloudDeploy ב-Chrome' },
                 { icon: '⋮', text: 'לחץ על תפריט שלוש הנקודות (פינה ימנית עליונה)' },
@@ -629,7 +629,7 @@ const HELP_STEPS = [
             <div className="bg-gradient-to-l from-blue-500 to-blue-700 px-4 py-3 text-white flex items-center gap-2">
               <span className="text-lg">🍎</span><span className="font-bold text-sm">iPhone / iPad — Safari בלבד</span>
             </div>
-            <div className="p-4 space-y-2.5 bg-blue-50 dark:bg-zinc-800">
+            <div className="p-4 space-y-2.5 bg-blue-50 dark:bg-zinc-700">
               {[
                 { icon: '🧭', text: 'פתח את CloudDeploy ב-Safari (חובה! לא Chrome)' },
                 { icon: '⬆️', text: 'לחץ על כפתור השיתוף (תחתית המסך)' },
@@ -711,7 +711,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
         className="fixed inset-0 z-[301] flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
-        <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border border-slate-200 dark:border-zinc-700" style={{maxHeight: '92vh'}}>
+        <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden border-2 border-slate-200 dark:border-zinc-700" style={{maxHeight: '92vh'}}>
 
           {/* Header */}
           <div className="bg-gradient-to-l from-primary to-primary/80 px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0">
@@ -728,7 +728,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Step tabs — horizontal scroll */}
-          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 shrink-0 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b-2 border-slate-300 dark:border-zinc-600 bg-slate-200 dark:bg-zinc-800 shrink-0 scrollbar-hide">
             {HELP_STEPS.map((step, i) => (
               <button
                 key={step.id}
@@ -736,7 +736,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2.5 text-[10px] font-bold shrink-0 border-b-2 transition-all min-w-[64px]",
                   activeStep === i
-                    ? "border-primary text-primary bg-background"
+                    ? "border-primary text-primary bg-white dark:bg-zinc-900"
                     : "border-transparent text-gray-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/60"
                 )}
               >
@@ -750,7 +750,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Progress bar */}
-          <div className="h-1 bg-muted shrink-0">
+          <div className="h-1.5 bg-slate-200 dark:bg-zinc-700 shrink-0">
             <motion.div
               className="h-full bg-primary"
               animate={{ width: `${((activeStep + 1) / HELP_STEPS.length) * 100}%` }}
@@ -759,7 +759,7 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto flex-1 p-5 bg-slate-50 dark:bg-zinc-900" dir="rtl">
+          <div className="overflow-y-auto flex-1 p-5 bg-white dark:bg-zinc-900" dir="rtl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeStep}
@@ -783,15 +783,15 @@ function HelpCenterModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Footer navigation */}
-          <div className="flex gap-3 p-4 border-t border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shrink-0">
+          <div className="flex gap-3 p-4 border-t-2 border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 shrink-0">
             <button
               onClick={() => setActiveStep(p => Math.max(0, p - 1))}
               disabled={activeStep === 0}
-              className="flex-1 py-3 rounded-2xl bg-muted text-foreground font-bold text-sm hover:bg-muted/80 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-2xl bg-slate-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 font-bold text-sm hover:bg-slate-300 dark:hover:bg-zinc-600 transition-colors disabled:opacity-25 flex items-center justify-center gap-2 border border-slate-300 dark:border-zinc-600"
             >
               <ChevronRight className="w-4 h-4" /><span>הקודם</span>
             </button>
-            <span className="flex items-center text-xs text-muted-foreground font-medium shrink-0">
+            <span className="flex items-center text-xs text-gray-600 dark:text-gray-400 font-bold shrink-0">
               {activeStep + 1} / {HELP_STEPS.length}
             </span>
             {activeStep < HELP_STEPS.length - 1 ? (
