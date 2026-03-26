@@ -5,22 +5,22 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
+  "background_color": "#eef2f7",
   "theme_color": "#2563eb",
   "lang": "he",
   "dir": "rtl",
   "icons": [
     {
-      "src": "https://img.icons8.com/fluency/192/cloud-upload.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://img.icons8.com/fluency/512/cloud-upload.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["productivity", "utilities"],

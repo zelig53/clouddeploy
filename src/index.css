@@ -14,6 +14,7 @@
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   --border: #e2e8f0;
+  --destructive: #ef4444;
 }
 
 .dark {
@@ -26,6 +27,7 @@
   --muted: #334155;
   --muted-foreground: #94a3b8;
   --border: #334155;
+  --destructive: #f87171;
 }
 
 body {
@@ -43,4 +45,78 @@ body {
   background: rgba(var(--card), 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
+}
+
+/* ── Action Buttons Row ─────────────────────────────────── */
+/* Prevents horizontal scroll on Android — buttons wrap and center */
+.action-buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.action-btn {
+  padding: 0.75rem 1.25rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: calc(50% - 5px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .action-btn {
+    flex: 0 1 auto;
+    max-width: none;
+  }
+}
+
+/* ── Root overflow guard ────────────────────────────────── */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+
+/* All cards in the same row stretch to equal height */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+@media (min-width: 768px) {
+  .projects-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .projects-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.project-card-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.project-card-repo {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
